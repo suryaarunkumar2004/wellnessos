@@ -24,4 +24,6 @@ public class MemberSignupRequest {
     @NotBlank(message = "A structural onboarding client tracking token is mandatory.")
     @Pattern(regexp = "^ATH-WN-\\d{5}$", message = "System account tracking ID must strictly match format requirements: ATH-WN-XXXXX.")
     private String clientTrackingToken;
+
+    private String role; // "ROLE_MEMBER" or "ROLE_COACH"
 }

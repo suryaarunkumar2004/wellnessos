@@ -8,6 +8,8 @@ import com.altheal.wellnessos.model.entity.HealthHistory;
 import com.altheal.wellnessos.model.entity.Member;
 import com.altheal.wellnessos.model.entity.Role;
 import com.altheal.wellnessos.repository.MemberRepository;
+import com.altheal.wellnessos.repository.RoleRepository;
+import com.altheal.wellnessos.repository.CoachRepository;
 import com.altheal.wellnessos.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,8 @@ public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final DataSanitizer dataSanitizer;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
+    private final CoachRepository coachRepository;
 
     @Override
     @Transactional
@@ -57,6 +61,34 @@ public class MemberServiceImpl implements MemberService {
         member.setEmail(request.getEmail());
         member.setPassword(passwordEncoder.encode(request.getPassword()));
         member.setClientTrackingToken(request.getClientTrackingToken());
+
+        // Dynamic Role Assignment
+        String targetRoleName = "ROLE_MEMBER";
+        if (request.getRole() != null && (request.getRole().equalsIgnoreCase("ROLE_COACH") || request.getRole().equalsIgnoreCase("coach"))) {
+            targetRoleName = "ROLE_COACH";
+        }
+
+        final String finalRoleName = targetRoleName;
+        Role role = roleRepository.findByName(finalRoleName)
+                .orElseGet(() -> roleRepository.save(new Role(finalRoleName)));
+        member.getRoles().add(role);
+
+        // If registered as COACH, create a Coach profile in the coaches table
+        if (finalRoleName.equals("ROLE_COACH")) {
+            if (!coachRepository.existsByEmail(request.getEmail())) {
+                com.altheal.wellnessos.model.entity.Coach coach = new com.altheal.wellnessos.model.entity.Coach();
+                coach.setFullName(request.getFullName());
+                coach.setEmail(request.getEmail());
+                coach.setSpecialization("Holistic Stress & Burnout Management");
+                coachRepository.save(coach);
+            }
+        } else {
+            // Assign a default coach if one exists
+            java.util.List<com.altheal.wellnessos.model.entity.Coach> coaches = coachRepository.findAll();
+            if (!coaches.isEmpty()) {
+                member.setAssignedCoach(coaches.get(0));
+            }
+        }
 
         HealthHistory profile = new HealthHistory();
         profile.setInitialBurnoutIndex(5);
