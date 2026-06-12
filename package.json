@@ -1,0 +1,22 @@
+{
+  "name": "wellnessos-pdf-gen",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "pdfkit": "^0.13.0",
+    "react-icons": "^5.6.0",
+    "uuid": "^14.0.0"
+  },
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "gen-section-pdfs": "node generate_section_pdfs.js",
+    "merge-pdfs": "node merge_pdfs.js",
+    "clean-pdfs": "node clean_generated_pdfs.js",
+    "generate-pdf": "npm run gen-section-pdfs && npm run merge-pdfs && npm run clean-pdfs",
+    "test": "npm --prefix frontend run test",
+    "cypress:open": "npm --prefix frontend run cypress:open",
+    "cypress:run": "npm --prefix frontend run cypress:run",
+    "postinstall": "echo disabled"
+  }
+}

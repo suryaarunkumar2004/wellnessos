@@ -1,0 +1,23 @@
+.toast__message {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  color: var(--gray-700);
+}
+
+.toast__close {
+  color: var(--gray-400);
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.toast__close:hover {
+  background: var(--gray-100);
+  color: var(--gray-600);
+}
+
+.toast-success .lucide:first-child { color: var(--success); }
+.toast-error .lucide:first-child { color: var(--error); }
+.toast-warning .lucide:first-child { color: var(--warning); }
+.toast-info .lucide:first-child { color: var(--info); }

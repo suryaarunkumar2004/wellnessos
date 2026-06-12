@@ -54,6 +54,34 @@ docker run -d \
 
 ---
 
+## 💻 React Frontend
+A React user interface is already included in `frontend/` using Vite and React 19.
+
+Local frontend development:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The Vite dev server runs on `http://localhost:5173` and proxies `/api/v1` requests to the backend at `http://localhost:5000`.
+
+For integrated production packaging, build the frontend and let Maven copy the `frontend/dist` output into Spring Boot static resources:
+```bash
+./mvnw clean package
+```
+
+> Note: The frontend Maven build now installs Node.js `20.19.0` so the Vite React app compiles successfully during `mvnw package`.
+
+Then start the Spring Boot application:
+```bash
+./mvnw spring-boot:run
+```
+
+The compiled React app is served by the backend on `http://localhost:5000`.
+
+---
+
 ## 🎯 Production Core REST Endpoint Schemas
 
 ### 🔓 Public Authorization Routes
