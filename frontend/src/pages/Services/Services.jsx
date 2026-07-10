@@ -1,175 +1,631 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHeart, FaRegHeart, FaCalendarAlt, FaInfoCircle, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar, FaShareAlt, FaBalanceScale, FaEye, FaPrint, FaCube } from 'react-icons/fa';
-
-// Mock CartContext – replace with real one later
-const useCart = () => {
-  const addToCart = (service, quantity) => {
-    alert(`Added ${service.name} (x${quantity}) to cart.`);
-  };
-  return { addToCart };
-};
-
-const styles = `
-  .services-page { font-family: 'Inter', system-ui, sans-serif; background: linear-gradient(135deg, #f5f7fc 0%, #eef2f6 100%); min-height: 100vh; padding: 2rem 1rem; }
-  .services-container { max-width: 1400px; margin: 0 auto; }
-  .hero-section { text-align: center; margin-bottom: 2rem; }
-  .hero-section h1 { font-size: 2.8rem; font-weight: 800; color: #059669; margin-bottom: 0.5rem; }
-  .filter-bar { background: white; border-radius: 1rem; padding: 1.2rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; }
-  .search-box { flex: 2; min-width: 200px; }
-  .search-box input { width: 100%; padding: 0.6rem 1rem; border: 1px solid #e2e8f0; border-radius: 2rem; }
-  .category-filter, .extra-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-  .category-btn, .filter-chip { padding: 0.4rem 1rem; border-radius: 2rem; background: #f1f5f9; border: none; font-size: 0.8rem; cursor: pointer; color: #059669; }
-  .category-btn.active, .filter-chip.active { background: #059669; color: white; }
-  .sort-select { padding: 0.5rem 1rem; border-radius: 2rem; border: 1px solid #e2e8f0; background: white; color: #059669; }
-  .price-range { display: flex; gap: 1rem; align-items: center; }
-  .price-range input { width: 100px; }
-  .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.8rem; }
-  .service-card { background: white; border-radius: 1.2rem; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: all 0.3s; display: flex; flex-direction: column; }
-  .service-card:hover { transform: translateY(-6px); box-shadow: 0 20px 30px -12px rgba(0,0,0,0.2); }
-  .card-image { height: 140px; background: linear-gradient(135deg, #a3c9d6, #6b9eb3); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white; }
-  .card-content { padding: 1.2rem; flex: 1; }
-  .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-  .service-title { font-weight: 700; font-size: 1.2rem; color: #1e293b; }
-  .service-category { font-size: 0.7rem; background: #e6f7f0; display: inline-block; padding: 0.2rem 0.6rem; border-radius: 1rem; color: #059669; margin-top: 0.3rem; }
-  .rating { display: flex; align-items: center; gap: 0.2rem; margin: 0.5rem 0; }
-  .description { font-size: 0.85rem; color: #475569; margin: 0.6rem 0; line-height: 1.4; }
-  .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.6rem 0; }
-  .tag { background: #f1f5f9; border-radius: 1rem; padding: 0.2rem 0.6rem; font-size: 0.7rem; color: #334155; }
-  .price-duration { display: flex; justify-content: space-between; align-items: baseline; margin: 0.8rem 0; }
-  .price { font-size: 1.6rem; font-weight: 800; color: #059669; }
-  .duration { font-size: 0.8rem; color: #64748b; }
-  .card-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.8rem 1.2rem 1.2rem; border-top: 1px solid #eef2f6; background: #fafcff; }
-  .action-icon { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.5rem 0; border-radius: 2rem; font-size: 0.7rem; font-weight: 500; cursor: pointer; border: none; }
-  .btn-primary { background: #059669; color: white; }
-  .btn-primary:hover { background: #047857; }
-  .btn-secondary { background: #e2e8f0; color: #1e293b; }
-  .btn-secondary:hover { background: #cbd5e1; }
-  .btn-outline { background: white; border: 1px solid #cbd5e1; color: #1e293b; }
-  .btn-outline:hover { background: #f8fafc; }
-  .favorite-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #ef4444; }
-  .pagination { display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem; flex-wrap: wrap; }
-  .page-btn { padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; background: white; cursor: pointer; color: #059669; }
-  .page-btn.active { background: #059669; color: white; border-color: #059669; }
-  .compare-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; z-index: 1000; border-top: 2px solid #059669; }
-  .compare-items { display: flex; gap: 1rem; }
-  .compare-item { background: #f1f5f9; padding: 0.3rem 0.8rem; border-radius: 2rem; display: flex; align-items: center; gap: 0.5rem; }
-  .compare-item button { background: none; border: none; cursor: pointer; color: #ef4444; }
-  @media (max-width: 700px) { .filter-bar { flex-direction: column; align-items: stretch; } .services-grid { grid-template-columns: 1fr; } .compare-bar { flex-direction: column; gap: 0.5rem; } }
-  @media print {
-    nav, footer, button:not(.print-btn), .filter-bar, .pagination, .action-buttons, .btn-group, .view-all, .favorite-btn, .card-actions, .compare-bar, .navbar, .top-bar { display: none !important; }
-    body { padding-top: 0 !important; margin: 0; background: white; }
-    .services-grid { display: block !important; }
-    .service-card { break-inside: avoid; page-break-inside: avoid; margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; }
-    h1, h2, h3 { page-break-after: avoid; }
-  }
-`;
-
-const CATEGORIES = ['Consultation', 'Nutrition', 'Fitness', 'Mindfulness', 'Workshop', 'Program', 'Corporate', 'Checkup', 'Therapy', 'Alternative', 'Digital', 'Coaching', 'Specialty', 'Beauty', 'Membership', 'Education', 'Rehabilitation', 'Mental Health', 'Wellness', 'Spa'];
-
-const generateServices = (count) => {
-  const services = [];
-  const namePrefixes = ['Holistic', 'Personalized', 'Power', 'Mindful', 'Corporate', 'Weight Loss', 'Executive', 'Sports', 'Ayurvedic', 'Online', 'Life', 'Prenatal', 'Anti-aging', 'Gym', 'Certified', 'Cardiac', 'Stress', 'Personal', 'Sleep', 'Immune', 'Acupuncture', 'Meditation', 'Couples', 'Biohacking', 'Virtual'];
-  const suffixes = ['Plan', 'Session', 'Program', 'Workshop', 'Package', 'Course', 'Coaching', 'Therapy', 'Consultation', 'Class', 'Treatment', 'Retreat'];
-  for (let i = 1; i <= count; i++) {
-    const cat = CATEGORIES[i % CATEGORIES.length];
-    const prefix = namePrefixes[i % namePrefixes.length];
-    const suffix = suffixes[i % suffixes.length];
-    const name = `${prefix} ${suffix} ${i}`;
-    const price = Math.floor(Math.random() * 300) + 20;
-    const durationOptions = ['30 min', '45 min', '60 min', '90 min', '2 hours', '4 weeks', 'monthly'];
-    const duration = durationOptions[i % durationOptions.length];
-    const rating = (Math.random() * 1.5 + 3.5).toFixed(1);
-    const popular = Math.random() > 0.85;
-    const featured = i <= 6;
-    const tags = [];
-    if (popular) tags.push('Popular');
-    if (Math.random() > 0.7) tags.push('Certified');
-    if (Math.random() > 0.8) tags.push('Online');
-    services.push({ id: i, name, category: cat, price, duration, rating: parseFloat(rating), popular, featured, description: `Experience our premium ${cat.toLowerCase()} service "${name}". Tailored to help you achieve optimal wellness.`, tags });
-  }
-  return services;
-};
-
-const allServices = generateServices(1000);
-const categoriesFilter = ['All', ...CATEGORIES];
+import { 
+  FaSearch, FaHeart, FaRegHeart, FaBookmark, FaRegBookmark,
+  FaShoppingCart, FaStar, FaClock, FaUserMd, FaAmbulance,
+  FaStethoscope, FaPills, FaHeartbeat, FaBrain, FaTooth,
+  FaEye, FaChild, FaFemale, FaMale, FaBone, FaLungs,
+  FaFilter, FaArrowLeft, FaArrowRight
+} from 'react-icons/fa';
+import { useFavorites } from '../../contexts/FavoritesContext';
+import { useBookmarks } from '../../contexts/BookmarksContext';
+import { useCart } from '../../contexts/CartContext';
+import { useToast } from '../../contexts/ToastContext';
+import Navbar from '../../components/Navbar/Navbar';
+import Footer from '../../components/Footer/Footer';
+import { servicesData } from '../../data/servicesData';
 
 const Services = () => {
-  const { addToCart } = useCart();
   const navigate = useNavigate();
-  const [favorites, setFavorites] = useState(() => { const saved = localStorage.getItem('serviceFavorites'); return saved ? JSON.parse(saved) : []; });
-  const [compareList, setCompareList] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const emerald = '#059669';
+  const emeraldLight = '#ecfdf5';
+  const emeraldDark = '#047857';
+  
+  const [services, setServices] = useState([]);
+  const [filteredServices, setFilteredServices] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('name');
-  const [priceRange, setPriceRange] = useState([0, 500]);
-  const [minRating, setMinRating] = useState(0);
-  const [durationFilter, setDurationFilter] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [categories, setCategories] = useState(['All']);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const [servicesPerPage] = useState(12);
+  
+  const { favorites, toggleFavorite, isFavorite } = useFavorites();
+  const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
+  const { addToCart, cartItems } = useCart();
+  const { showToast } = useToast();
 
-  useEffect(() => { localStorage.setItem('serviceFavorites', JSON.stringify(favorites)); }, [favorites]);
+  useEffect(() => {
+    setServices(servicesData);
+    setFilteredServices(servicesData);
+    const cats = ['All', ...new Set(servicesData.map(s => s.category).filter(Boolean))];
+    setCategories(cats);
+    setLoading(false);
+  }, []);
 
-  const toggleFavorite = (id) => setFavorites(prev => prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]);
-  const addToCompare = (service) => { if (compareList.length >= 4) { alert('Max 4 services'); return; } if (!compareList.find(s => s.id === service.id)) setCompareList([...compareList, service]); else alert('Already in compare'); };
-  const removeFromCompare = (id) => setCompareList(compareList.filter(s => s.id !== id));
-  const clearCompare = () => setCompareList([]);
-  const handleQuickView = (service) => alert(`Quick View\n\n${service.name}\nPrice: $${service.price}\nDuration: ${service.duration}\nRating: ${service.rating}\nDescription: ${service.description}`);
-  const handleBook = (service) => alert(`Booking request sent for "${service.name}". We'll contact you shortly!`);
-  const handleDetails = (service) => navigate(`/service/${service.id}`);
-  const handleSchedule = (service) => alert(`Schedule appointment for "${service.name}" – calendar picker would open.`);
-  const handleShare = (service) => { navigator.clipboard?.writeText(`${service.name} - $${service.price} - WellnessOS`); alert(`Link for "${service.name}" copied.`); };
-  const handlePrint = () => window.print();
+  useEffect(() => {
+    let result = [...services];
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(s => 
+        s.name?.toLowerCase().includes(term) ||
+        s.description?.toLowerCase().includes(term) ||
+        s.category?.toLowerCase().includes(term)
+      );
+    }
+    if (selectedCategory !== 'All') {
+      result = result.filter(s => s.category === selectedCategory);
+    }
+    setFilteredServices(result);
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, services]);
 
-  const renderStars = (rating) => { let stars = []; for (let i=1;i<=5;i++) stars.push(i<=rating ? <FaStar key={i} style={{color:'#fbbf24'}} /> : <FaRegStar key={i} style={{color:'#cbd5e1'}} />); return stars; };
+  const handleAddToCart = (service) => {
+    addToCart({
+      id: service.id,
+      name: service.name,
+      price: service.price || 299,
+      type: 'service'
+    });
+    if (showToast) showToast(`${service.name} added to cart!`, 'success');
+  };
 
-  let filtered = allServices.filter(s => (selectedCategory==='All' || s.category===selectedCategory) && s.name.toLowerCase().includes(searchTerm.toLowerCase()) && s.price>=priceRange[0] && s.price<=priceRange[1] && s.rating>=minRating && (durationFilter==='All' || s.duration===durationFilter));
-  if (sortBy === 'price-asc') filtered.sort((a,b)=>a.price-b.price);
-  else if (sortBy === 'price-desc') filtered.sort((a,b)=>b.price-a.price);
-  else if (sortBy === 'rating') filtered.sort((a,b)=>b.rating-a.rating);
-  else if (sortBy === 'popular') filtered.sort((a,b)=> (b.popular?1:0)-(a.popular?1:0));
-  else filtered.sort((a,b)=>a.name.localeCompare(b.name));
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginated = filtered.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);
-  const featuredServices = allServices.filter(s=>s.featured).slice(0,6);
-  const uniqueDurations = ['All', ...new Set(allServices.map(s=>s.duration))];
+  const getCategoryIcon = (category) => {
+    const icons = {
+      'Cardiology': <FaHeartbeat />,
+      'Pharmacy': <FaPills />,
+      'General Medicine': <FaStethoscope />,
+      'Emergency': <FaAmbulance />,
+      'Lab Testing': <FaUserMd />,
+      'Dentistry': <FaTooth />,
+      'Neurology': <FaBrain />,
+      'Pulmonology': <FaLungs />,
+      'Ophthalmology': <FaEye />,
+      'Pediatrics': <FaChild />,
+      'Orthopedics': <FaBone />,
+      'Gynecology': <FaFemale />,
+      'Urology': <FaMale />,
+      'Wellness': <FaHeartbeat />,
+      'Therapy': <FaUserMd />,
+      'Surgery': <FaUserMd />,
+      'Alternative Medicine': <FaUserMd />,
+      'Premium': <FaStar />,
+      'Home Health': <FaUserMd />,
+      'ENT': <FaUserMd />,
+      'Rheumatology': <FaUserMd />,
+      'Endocrinology': <FaUserMd />,
+      'Gastroenterology': <FaUserMd />,
+      'Nutrition': <FaUserMd />,
+      'Psychiatry': <FaBrain />
+    };
+    return icons[category] || <FaStethoscope />;
+  };
+
+  const getCategoryColor = (category) => {
+    const colors = {
+      'Cardiology': '#ef4444',
+      'Pharmacy': '#8b5cf6',
+      'General Medicine': '#3b82f6',
+      'Emergency': '#dc2626',
+      'Lab Testing': '#059669',
+      'Dentistry': '#ec4899',
+      'Neurology': '#7c3aed',
+      'Pulmonology': '#06b6d4',
+      'Ophthalmology': '#14b8a6',
+      'Pediatrics': '#f59e0b',
+      'Orthopedics': '#f97316',
+      'Gynecology': '#db2777',
+      'Urology': '#059669',
+      'Wellness': '#10b981',
+      'Therapy': '#6366f1',
+      'Surgery': '#dc2626',
+      'Alternative Medicine': '#8b5cf6',
+      'Premium': '#f59e0b',
+      'Home Health': '#06b6d4',
+      'ENT': '#3b82f6',
+      'Rheumatology': '#6366f1',
+      'Endocrinology': '#14b8a6',
+      'Gastroenterology': '#f59e0b',
+      'Nutrition': '#22c55e',
+      'Psychiatry': '#7c3aed'
+    };
+    return colors[category] || '#64748b';
+  };
+
+  const totalPages = Math.ceil(filteredServices.length / servicesPerPage);
+  const indexOfLastService = currentPage * servicesPerPage;
+  const indexOfFirstService = indexOfLastService - servicesPerPage;
+  const currentServices = filteredServices.slice(indexOfFirstService, indexOfLastService);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const renderStars = (rating) => {
+    const fullStars = Math.floor(rating || 4.5);
+    const emptyStars = 5 - fullStars;
+    return (
+      <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+        {[...Array(fullStars)].map((_, i) => (
+          <FaStar key={i} style={{ color: '#f59e0b', fontSize: '0.7rem' }} />
+        ))}
+        {[...Array(emptyStars)].map((_, i) => (
+          <FaStar key={i} style={{ color: '#e2e8f0', fontSize: '0.7rem' }} />
+        ))}
+      </span>
+    );
+  };
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ paddingTop: '80px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: '50px', height: '50px', border: `4px solid ${emeraldLight}`, borderTop: `4px solid ${emerald}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
+            <p style={{ color: '#64748b', marginTop: '16px' }}>Loading services...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
-      <style>{styles}</style>
-      <div className="services-page">
-        <div className="services-container">
-          <div style={{display:'flex', justifyContent:'flex-end', marginBottom:'16px'}}>
-            <button onClick={handlePrint} className="print-btn" style={{background:'#059669', color:'white', border:'none', padding:'8px 16px', borderRadius:'40px', cursor:'pointer', display:'flex', alignItems:'center', gap:'8px'}}><FaPrint /> Export PDF</button>
-          </div>
-          <div className="hero-section">
-            <h1>1,000+ Wellness Services</h1>
-            <p>Curated for your body, mind, and spirit — from trusted experts</p>
-          </div>
-          <div style={{ display: 'flex', overflowX: 'auto', gap: '1rem', marginBottom: '2rem', paddingBottom: '0.5rem' }}>
-            {featuredServices.map(s => (<div key={s.id} style={{ background: 'white', borderRadius: '1rem', padding: '0.5rem 1rem', minWidth: '180px', boxShadow: '0 2px 6px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}><FaCube style={{fontSize:'2rem', color:'#059669'}} /><div><div style={{fontWeight:'bold'}}>{s.name.substring(0,20)}</div><div style={{fontSize:'0.8rem', color:'#059669'}}>${s.price} · {s.duration}</div></div></div>))}
-          </div>
-          <div className="filter-bar">
-            <div className="search-box"><input type="text" placeholder="Search 1000+ services..." value={searchTerm} onChange={e=>{setSearchTerm(e.target.value); setCurrentPage(1);}} /></div>
-            <div className="category-filter">{categoriesFilter.map(cat=><button key={cat} className={`category-btn ${selectedCategory===cat?'active':''}`} onClick={()=>{setSelectedCategory(cat); setCurrentPage(1);}}>{cat}</button>)}</div>
-            <div className="extra-filters">
-              <select className="sort-select" value={sortBy} onChange={e=>{setSortBy(e.target.value); setCurrentPage(1);}}><option value="name">Sort by Name</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option><option value="rating">Highest Rated</option><option value="popular">Most Popular</option></select>
-              <div className="price-range"><span>$0</span><input type="range" min="0" max="500" step="10" value={priceRange[1]} onChange={e=>setPriceRange([0, parseInt(e.target.value)])} /><span>${priceRange[1]}</span></div>
-              <select className="sort-select" value={minRating} onChange={e=>setMinRating(Number(e.target.value))}><option value={0}>All ratings</option><option value={4}>4★ & above</option><option value={4.5}>4.5★ & above</option></select>
-              <select className="sort-select" value={durationFilter} onChange={e=>setDurationFilter(e.target.value)}>{uniqueDurations.map(dur=><option key={dur} value={dur}>{dur}</option>)}</select>
+      <Navbar />
+      <div style={{ paddingTop: '80px', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter', system-ui, sans-serif" }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 24px' }}>
+          {/* Header */}
+          <div style={{
+            background: 'linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%)',
+            borderRadius: '24px',
+            padding: '48px 40px',
+            marginBottom: '32px',
+            position: 'relative',
+            overflow: 'hidden',
+            color: 'white'
+          }}>
+            <div style={{ position: 'absolute', top: '-100px', right: '-60px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: '-150px', left: '-80px', width: '400px', height: '400px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.15)', padding: '14px', borderRadius: '14px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <FaStethoscope style={{ fontSize: '2rem', opacity: 0.9 }} />
+                </div>
+                <div>
+                  <h1 style={{ fontSize: '2.2rem', fontWeight: '700', letterSpacing: '-0.5px', margin: 0, textShadow: '0 2px 20px rgba(0,0,0,0.1)' }}>
+                    Healthcare Services
+                  </h1>
+                  <p style={{ fontSize: '1rem', opacity: 0.9, margin: '2px 0 0 0', fontWeight: '300' }}>
+                    {filteredServices.length} premium healthcare services available
+                  </p>
+                </div>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                gap: '12px',
+                marginTop: '16px'
+              }}>
+                {[
+                  { label: 'Total Services', value: services.length, icon: FaStethoscope },
+                  { label: 'Categories', value: categories.length - 1, icon: FaFilter },
+                  { label: 'Favorites', value: favorites.filter(f => f.type === 'service').length, icon: FaHeart },
+                  { label: 'Bookmarks', value: bookmarks.filter(b => b.type === 'service').length, icon: FaBookmark },
+                ].map((stat, idx) => (
+                  <div key={idx} style={{
+                    background: 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+                    <div style={{ background: 'rgba(255,255,255,0.15)', padding: '6px', borderRadius: '8px' }}>
+                      <stat.icon style={{ fontSize: '1rem', color: 'white' }} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1rem', fontWeight: '700', lineHeight: '1.2' }}>{stat.value}</div>
+                      <div style={{ fontSize: '0.65rem', opacity: 0.8 }}>{stat.label}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="services-grid">
-            {paginated.map(service => (<div key={service.id} className="service-card"><div className="card-image"><FaCube style={{fontSize:'3rem', color:'white'}} /></div><div className="card-content"><div className="card-header"><div><div className="service-title">{service.name}</div><div className="service-category">{service.category}</div></div><button className="favorite-btn" onClick={()=>toggleFavorite(service.id)}>{favorites.includes(service.id)?<FaHeart />:<FaRegHeart />}</button></div><div className="rating">{renderStars(service.rating)}<span style={{fontSize:'0.75rem', marginLeft:'0.25rem'}}>{service.rating}</span></div><div className="description">{service.description}</div><div className="tags">{service.tags.map((tag,idx)=><span key={idx} className="tag">{tag}</span>)}</div><div className="price-duration"><span className="price">${service.price}</span><span className="duration">{service.duration}</span></div></div><div className="card-actions"><button className="action-icon btn-primary" onClick={()=>addToCart(service,1)}><FaShoppingCart /> Cart</button><button className="action-icon btn-primary" onClick={()=>handleBook(service)}>Book</button><button className="action-icon btn-secondary" onClick={()=>handleSchedule(service)}><FaCalendarAlt /> Schedule</button><button className="action-icon btn-outline" onClick={()=>handleQuickView(service)}><FaEye /> Quick</button><button className="action-icon btn-outline" onClick={()=>handleDetails(service)}><FaInfoCircle /> Details</button><button className="action-icon btn-outline" onClick={()=>handleShare(service)}><FaShareAlt /> Share</button><button className="action-icon btn-outline" onClick={()=>addToCompare(service)}><FaBalanceScale /> Compare</button></div></div>))}
+
+          {/* Search and Filter */}
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            marginBottom: '24px',
+            flexWrap: 'wrap',
+            alignItems: 'center'
+          }}>
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              background: 'white',
+              borderRadius: '12px',
+              padding: '0 16px',
+              border: '2px solid #e2e8f0',
+              minWidth: '200px',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = emerald; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; }}>
+              <FaSearch style={{ color: '#94a3b8', fontSize: '0.9rem' }} />
+              <input
+                type="text"
+                placeholder="Search 200+ premium healthcare services..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  border: 'none',
+                  padding: '12px 14px',
+                  width: '100%',
+                  outline: 'none',
+                  fontSize: '0.9rem',
+                  fontFamily: 'inherit',
+                  background: 'transparent'
+                }}
+              />
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                style={{
+                  padding: '12px 40px 12px 16px',
+                  borderRadius: '12px',
+                  border: '2px solid #e2e8f0',
+                  background: 'white',
+                  fontSize: '0.9rem',
+                  color: '#1e293b',
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  outline: 'none',
+                  minWidth: '140px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = emerald; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; }}
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <FaFilter style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.8rem', pointerEvents: 'none' }} />
+            </div>
           </div>
-          {totalPages > 1 && (<div className="pagination"><button className="page-btn" disabled={currentPage===1} onClick={()=>setCurrentPage(p=>p-1)}>◀ Prev</button>{[...Array(Math.min(7,totalPages))].map((_,i)=>{let pageNum=i+1; if(currentPage>3 && totalPages>7) pageNum=currentPage-3+i; if(pageNum>totalPages) return null; return <button key={pageNum} className={`page-btn ${currentPage===pageNum?'active':''}`} onClick={()=>setCurrentPage(pageNum)}>{pageNum}</button>;})}<button className="page-btn" disabled={currentPage===totalPages} onClick={()=>setCurrentPage(p=>p+1)}>Next ▶</button></div>)}
-          <div style={{textAlign:'center', marginTop:'1rem', fontSize:'0.8rem', color:'#64748b'}}>Showing {filtered.length} of {allServices.length} wellness services</div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0, fontWeight: '500' }}>
+              Found <span style={{ color: emerald, fontWeight: '700' }}>{filteredServices.length}</span> premium services
+            </p>
+          </div>
+
+          {/* Services Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '20px',
+            marginBottom: '40px'
+          }}>
+            {currentServices.map((service) => {
+              const isFav = isFavorite(service.id);
+              const isBookmark = isBookmarked(service.id);
+              const inCart = cartItems?.some(item => item.id === service.id);
+              const color = getCategoryColor(service.category);
+              const priceValue = service.price || 299;
+
+              return (
+                <div
+                  key={service.id}
+                  style={{
+                    background: 'white',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    paddingTop: '44px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+                    border: '1px solid #e2e8f0',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '380px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.08)';
+                    e.currentTarget.style.borderColor = emerald;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.06)';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                  }}
+                  onClick={() => navigate(`/services/${service.id}`)}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    top: '12px',
+                    left: '12px',
+                    background: color,
+                    color: 'white',
+                    padding: '3px 12px',
+                    borderRadius: '12px',
+                    fontSize: '0.6rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    zIndex: 5,
+                    maxWidth: '60%'
+                  }}>
+                    {getCategoryIcon(service.category)}
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {service.category || 'General'}
+                    </span>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '10px',
+                    marginTop: '4px'
+                  }}>
+                    <div style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '12px',
+                      background: `${color}15`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.3rem',
+                      color: color,
+                      flexShrink: 0
+                    }}>
+                      {getCategoryIcon(service.category)}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h3 style={{
+                        fontSize: '0.95rem',
+                        fontWeight: '700',
+                        color: '#1e293b',
+                        margin: 0,
+                        lineHeight: '1.2',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical'
+                      }}>
+                        {service.name}
+                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                        {renderStars(service.rating || 4.5)}
+                        <span style={{ fontSize: '0.6rem', color: '#94a3b8' }}>({service.rating || 4.5})</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p style={{
+                    fontSize: '0.78rem',
+                    color: '#64748b',
+                    lineHeight: '1.5',
+                    margin: '0 0 12px 0',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    flexShrink: 0
+                  }}>
+                    {service.description || 'Premium healthcare service'}
+                  </p>
+
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '10px',
+                    flexWrap: 'wrap',
+                    flexShrink: 0
+                  }}>
+                    <span style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '0.65rem',
+                      color: '#94a3b8'
+                    }}>
+                      <FaClock style={{ fontSize: '0.5rem', color: emerald }} />
+                      {service.duration || '30 min'}
+                    </span>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderTop: '1px solid #f1f5f9',
+                    paddingTop: '12px',
+                    marginTop: 'auto',
+                    flexShrink: 0
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.55rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Price</span>
+                      <div style={{ fontSize: '1.1rem', fontWeight: '700', color: emerald }}>
+                        ₹{priceValue}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(service.id, { id: service.id, name: service.name, type: 'service', category: service.category }); }}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          background: isFav ? '#fef2f2' : 'white',
+                          color: isFav ? '#ef4444' : '#94a3b8',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        {isFav ? <FaHeart /> : <FaRegHeart />}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleBookmark(service.id, { id: service.id, name: service.name, type: 'service', category: service.category }); }}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          background: isBookmark ? '#fffbeb' : 'white',
+                          color: isBookmark ? '#f59e0b' : '#94a3b8',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        {isBookmark ? <FaBookmark /> : <FaRegBookmark />}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleAddToCart(service); }}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: inCart ? '#d1fae5' : emerald,
+                          color: inCart ? '#047857' : 'white',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontWeight: '600',
+                          fontSize: '0.7rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <FaShoppingCart style={{ fontSize: '0.65rem' }} />
+                        {inCart ? 'Added' : 'Add'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {totalPages > 1 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '8px',
+              flexWrap: 'wrap',
+              marginTop: '20px',
+              marginBottom: '40px',
+              padding: '16px 0'
+            }}>
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  background: 'white',
+                  color: currentPage === 1 ? '#e2e8f0' : '#64748b',
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontSize: '0.85rem'
+                }}
+              >
+                <FaArrowLeft />
+              </button>
+
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) pageNum = i + 1;
+                else if (currentPage <= 3) pageNum = i + 1;
+                else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                else pageNum = currentPage - 2 + i;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => goToPage(pageNum)}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: currentPage === pageNum ? `2px solid ${emerald}` : '1px solid #e2e8f0',
+                      background: currentPage === pageNum ? emerald : 'white',
+                      color: currentPage === pageNum ? 'white' : '#64748b',
+                      cursor: 'pointer',
+                      fontWeight: currentPage === pageNum ? '700' : '500',
+                      transition: 'all 0.2s ease',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  background: 'white',
+                  color: currentPage === totalPages ? '#e2e8f0' : '#64748b',
+                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontSize: '0.85rem'
+                }}
+              >
+                <FaArrowRight />
+              </button>
+            </div>
+          )}
         </div>
       </div>
-      {compareList.length > 0 && (<div className="compare-bar"><div className="compare-items">{compareList.map(s=><div key={s.id} className="compare-item"><span>{s.name.substring(0,20)}</span><button onClick={()=>removeFromCompare(s.id)}>✕</button></div>)}</div><div><button className="action-icon btn-primary" style={{marginRight:'1rem'}} onClick={()=>alert(`Compare:\n${compareList.map(s=>`${s.name} - $${s.price}`).join('\n')}`)}>Compare Now</button><button className="action-icon btn-outline" onClick={clearCompare}>Clear All</button></div></div>)}
-    </>
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+      <Footer />
+      </>
   );
 };
 
 export default Services;
-

@@ -1,22 +1,74 @@
-/* Reserve space for fixed navbar (approx 80px) */
-body {
-  padding-top: 80px !important;
-  margin: 0;
-  background: #f0fdf4;
+:root {
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-size: 1rem;
+  --line-height: 1.5;
+  --letter-spacing: 0px;
 }
-footer {
-  margin-top: 40px;
+
+/* Apply to ALL elements */
+* {
+  font-family: var(--font-family) !important;
 }
 
 html, body {
-  height: 100%;
-  margin: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
-#root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+
+html, body, #root, .App {
+  font-family: var(--font-family) !important;
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  letter-spacing: var(--letter-spacing);
 }
-footer {
-  margin-top: auto;
+
+/* ⭐ REDUCED MOTION - Applied to html tag */
+html.reduced-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
 }
+
+/* ⭐ UNDERLINE LINKS */
+html.underline-links a {
+  text-decoration: underline !important;
+}
+
+/* Additional overrides */
+input, textarea, select, button, div, span, p, h1, h2, h3, h4, h5, h6, a, li {
+  font-family: var(--font-family) !important;
+}
+
+/* Prevent scrollbar flash */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #10b981;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #059669;
+}
+
+/* Custom Selection & Focus Colors (Override Browser Default Blue) */
+::selection {
+  background-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #059669 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.25) !important;
+}
+
+select option:checked {
+  box-shadow: 0 0 10px 100px #059669 inset !important;
+  background-color: #059669 !important;
+  color: white !important;
+}
+

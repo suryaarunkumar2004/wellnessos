@@ -1,27 +1,14 @@
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS construction-engine
-
+# Stage 1: Build the backend from root context
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
 WORKDIR /app
-
-COPY pom.xml .
-
+COPY backend/pom.xml .
 RUN mvn dependency:go-offline -B
+COPY backend/src ./src
+RUN mvn clean package -DskipTests=true
 
-COPY src ./src
-
-RUN mvn clean package -DskipTests=false
-
-FROM eclipse-temurin:17-jre-alpine AS deployment-perimeter
-
+# Stage 2: Run the backend
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-
-RUN addgroup -S althealgroup && adduser -S althealuser -G althealgroup
-
-COPY --from=construction-engine /app/target/wellnessos-0.0.1-SNAPSHOT.jar ./wellnessos.jar
-
-USER althealuser
-
-EXPOSE 5000
-
-ENV SPRING_PROFILES_ACTIVE=prod
-
-ENTRYPOINT ["java", "-XX:+UseG1GC", "-jar", "wellnessos.jar"]
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

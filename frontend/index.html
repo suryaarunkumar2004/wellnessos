@@ -1,56 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <script>
-    // ULTIMATE GOOGLE TRANSLATE ERROR KILLER – runs before anything else
-    (function() {
-      // 1. Block the error from ever reaching the console
-      const originalError = window.onerror;
-      window.onerror = function(message, source, lineno, colno, error) {
-        if (source && source.includes('google-translate-force')) {
-          return true; // suppresses the error
-        }
-        if (originalError) return originalError(message, source, lineno, colno, error);
-        return false;
-      };
-      
-      // 2. Intercept console.error
-      const origConsoleError = console.error;
-      console.error = function(...args) {
-        const str = args.join(' ');
-        if (str.includes('google-translate-force') || str.includes('Unexpected token')) {
-          return; // swallow the error
-        }
-        origConsoleError.apply(console, args);
-      };
-      
-      // 3. Monitor DOM and remove any injected script with that source
-      const observer = new MutationObserver(() => {
-        document.querySelectorAll('script[src*="google-translate-force"]').forEach(s => s.remove());
-      });
-      observer.observe(document.documentElement, { childList: true, subtree: true });
-      
-      // 4. Also run immediately
-      document.querySelectorAll('script[src*="google-translate-force"]').forEach(s => s.remove());
-    })();
-  </script>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WellnessOS</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-</head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx?v=2"></script>
-<script>
-// Register service worker to block google-translate-force.js
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then(reg => {
-    console.log('Service worker registered to block translate script');
-  }).catch(err => console.log('SW registration failed:', err));
-}
-</script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WellNest - Health & Wellness</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
-
-

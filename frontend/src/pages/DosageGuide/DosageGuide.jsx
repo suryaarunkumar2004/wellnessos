@@ -1,229 +1,578 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaCalculator, FaExclamationTriangle, FaPills, FaBell, FaDownload, FaTrash, FaPlus, FaInfoCircle, FaYoutube, FaBook, FaUserMd } from 'react-icons/fa';
-
-const dosageDB = {
-  'paracetamol': { adult: '500mg every 4-6 hours, max 3000mg/day', child: '15mg/kg every 6 hours', note: 'Do not exceed 4 doses in 24h.' },
-  'ibuprofen': { adult: '200-400mg every 6-8 hours', child: '5-10mg/kg every 8 hours', note: 'Take with food.' },
-  'amoxicillin': { adult: '250-500mg every 8 hours', child: '20-40mg/kg/day divided every 8h', note: 'Complete full course.' },
-  'cetirizine': { adult: '10mg once daily', child: '5mg once daily (age 6-12)', note: 'May cause drowsiness.' },
-  'metformin': { adult: '500mg twice daily with meals', child: 'Not typically used', note: 'Monitor blood sugar.' },
-  'lisinopril': { adult: '10mg once daily', child: '0.1mg/kg once daily', note: 'May cause cough.' },
-  'atorvastatin': { adult: '10-20mg once daily', child: 'Not recommended', note: 'Take at bedtime.' },
-};
-
-const interactionsDB = {
-  'paracetamol': ['warfarin (increased bleeding risk - moderate)'],
-  'ibuprofen': ['aspirin (increased bleeding risk - moderate)', 'lisinopril (reduced effect - minor)'],
-  'amoxicillin': ['methotrexate (increased toxicity - moderate)'],
-  'lisinopril': ['ibuprofen (reduced effect - minor)', 'potassium supplements (hyperkalemia - major)'],
-  'warfarin': ['paracetamol (increased bleeding risk - moderate)', 'ibuprofen (major bleeding risk - major)'],
-};
-
-const sideEffectsDB = {
-  'paracetamol': 'Generally well tolerated. Rare: allergic reactions, liver damage with overdose.',
-  'ibuprofen': 'Common: stomach upset, heartburn. Serious: stomach bleeding, kidney issues.',
-  'amoxicillin': 'Common: diarrhea, nausea, rash. Serious: allergic reaction (swelling, breathing trouble).',
-  'lisinopril': 'Common: dry cough, dizziness. Serious: angioedema (swelling of face/lips).',
-  'atorvastatin': 'Common: muscle aches, joint pain. Serious: liver damage, muscle breakdown.',
-};
+import { useNavigate } from 'react-router-dom';
+import { 
+  FaSearch, FaHeart, FaRegHeart, FaBookmark, FaRegBookmark,
+  FaShoppingCart, FaStar, FaClock, FaPills, FaUserMd,
+  FaFilter, FaArrowLeft, FaArrowRight, FaInfoCircle,
+  FaPlus, FaMinus, FaPrescription, FaChartLine,
+  FaChevronLeft, FaChevronRight
+} from 'react-icons/fa';
+import { useFavorites } from '../../contexts/FavoritesContext';
+import { useBookmarks } from '../../contexts/BookmarksContext';
+import { useCart } from '../../contexts/CartContext';
+import { useToast } from '../../contexts/ToastContext';
+import Navbar from '../../components/Navbar/Navbar';
+import Footer from '../../components/Footer/Footer';
+import { drugDatabase } from '../../services/drugDatabase';
 
 const DosageGuide = () => {
-  const [drug, setDrug] = useState('');
-  const [info, setInfo] = useState(null);
-  const [savedMeds, setSavedMeds] = useState(() => {
-    const saved = localStorage.getItem('savedMeds');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [newMed, setNewMed] = useState('');
-  const [reminders, setReminders] = useState(() => {
-    const saved = localStorage.getItem('reminders');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [newReminder, setNewReminder] = useState({ med: '', date: '', time: '' });
-  const [interactionDrug, setInteractionDrug] = useState('');
-  const [interactionResult, setInteractionResult] = useState('');
-  const [sideEffectDrug, setSideEffectDrug] = useState('');
-  const [sideEffectResult, setSideEffectResult] = useState('');
-  const [weight, setWeight] = useState('');
-  const [calcMed, setCalcMed] = useState('');
-  const [calcResult, setCalcResult] = useState('');
+  const navigate = useNavigate();
+  const emerald = '#059669';
+  const emeraldLight = '#ecfdf5';
+  const emeraldDark = '#047857';
+  
+  const [drugs, setDrugs] = useState([]);
+  const [filteredDrugs, setFilteredDrugs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [categories, setCategories] = useState(['All']);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [drugsPerPage] = useState(12);
+  
+  const { favorites, toggleFavorite, isFavorite } = useFavorites();
+  const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
+  const { addToCart, cartItems } = useCart();
+  const { showToast } = useToast();
 
   useEffect(() => {
-    localStorage.setItem('savedMeds', JSON.stringify(savedMeds));
-    localStorage.setItem('reminders', JSON.stringify(reminders));
-  }, [savedMeds, reminders]);
+    setDrugs(drugDatabase);
+    setFilteredDrugs(drugDatabase);
+    const cats = ['All', ...new Set(drugDatabase.map(d => d.category).filter(Boolean))];
+    setCategories(cats);
+    setLoading(false);
+  }, []);
 
-  const lookupDrug = () => {
-    const key = drug.toLowerCase().trim();
-    if (dosageDB[key]) setInfo(dosageDB[key]);
-    else setInfo({ error: 'Drug not found. Try: paracetamol, ibuprofen, amoxicillin, cetirizine, metformin, lisinopril, atorvastatin.' });
+  useEffect(() => {
+    let result = [...drugs];
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(d => 
+        d.name?.toLowerCase().includes(term) ||
+        d.category?.toLowerCase().includes(term) ||
+        (d.indications && d.indications.some(i => i.toLowerCase().includes(term))) ||
+        d.manufacturer?.toLowerCase().includes(term)
+      );
+    }
+    if (selectedCategory !== 'All') {
+      result = result.filter(d => d.category === selectedCategory);
+    }
+    setFilteredDrugs(result);
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, drugs]);
+
+  const handleAddToCart = (drug) => {
+    addToCart({
+      id: drug.id,
+      name: drug.name,
+      price: parseFloat(drug.price) || 299,
+      type: 'drug'
+    });
+    if (showToast) showToast(`${drug.name} added to cart!`, 'success');
   };
 
-  const addSavedMed = () => {
-    if (newMed.trim() && !savedMeds.includes(newMed.trim())) {
-      setSavedMeds([...savedMeds, newMed.trim()]);
-      setNewMed('');
+  const getCategoryColor = (category) => {
+    const colors = {
+      'Pain Relief': '#ef4444',
+      'Antibiotics': '#8b5cf6',
+      'Cardiovascular': '#ec4899',
+      'Diabetes': '#059669',
+      'Respiratory': '#06b6d4',
+      'Gastrointestinal': '#f59e0b',
+      'Psychiatry': '#7c3aed',
+      'Antihistamine': '#3b82f6',
+      'Hormones': '#db2777',
+      'Oncology': '#dc2626',
+      'Dermatology': '#ec4899',
+      'Nervous System': '#7c3aed'
+    };
+    return colors[category] || '#64748b';
+  };
+
+  const totalPages = Math.ceil(filteredDrugs.length / drugsPerPage);
+  const indexOfLastDrug = currentPage * drugsPerPage;
+  const indexOfFirstDrug = indexOfLastDrug - drugsPerPage;
+  const currentDrugs = filteredDrugs.slice(indexOfFirstDrug, indexOfLastDrug);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
-  const removeSavedMed = (index) => setSavedMeds(savedMeds.filter((_, i) => i !== index));
 
-  const addReminder = () => {
-    if (newReminder.med && newReminder.date && newReminder.time) {
-      setReminders([...reminders, { ...newReminder, id: Date.now() }]);
-      setNewReminder({ med: '', date: '', time: '' });
-    }
-  };
-  const removeReminder = (id) => setReminders(reminders.filter(r => r.id !== id));
-
-  const checkInteraction = () => {
-    const key = interactionDrug.toLowerCase().trim();
-    if (interactionsDB[key]) setInteractionResult(interactionsDB[key].join('; '));
-    else setInteractionResult('No known interactions found for this drug.');
-  };
-
-  const checkSideEffect = () => {
-    const key = sideEffectDrug.toLowerCase().trim();
-    if (sideEffectsDB[key]) setSideEffectResult(sideEffectsDB[key]);
-    else setSideEffectResult('No common side effects recorded. Consult your doctor.');
+  const renderStars = (rating) => {
+    const fullStars = Math.floor(rating || 4.5);
+    const emptyStars = 5 - fullStars;
+    return (
+      <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+        {[...Array(fullStars)].map((_, i) => (
+          <FaStar key={i} style={{ color: '#f59e0b', fontSize: '0.7rem' }} />
+        ))}
+        {[...Array(emptyStars)].map((_, i) => (
+          <FaStar key={i} style={{ color: '#e2e8f0', fontSize: '0.7rem' }} />
+        ))}
+      </span>
+    );
   };
 
-  const calculateDosage = () => {
-    const w = parseFloat(weight);
-    if (isNaN(w) || w <= 0) { setCalcResult('Enter a valid weight (kg).'); return; }
-    const med = calcMed.toLowerCase().trim();
-    if (med === 'paracetamol') {
-      const dose = (w * 15).toFixed(0);
-      setCalcResult(`Paracetamol: ${dose} mg every 6 hours (max 4 doses/day).`);
-    } else if (med === 'ibuprofen') {
-      const dose = (w * 10).toFixed(0);
-      setCalcResult(`Ibuprofen: ${dose} mg every 8 hours (take with food).`);
-    } else {
-      setCalcResult('Dosage calculator only for paracetamol and ibuprofen.');
-    }
-  };
-
-  const exportData = () => {
-    const data = { savedMeds, reminders };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dosage_data_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ paddingTop: '80px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: '50px', height: '50px', border: `4px solid ${emeraldLight}`, borderTop: `4px solid ${emerald}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
+            <p style={{ color: '#64748b', marginTop: '16px' }}>Loading drug information...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 160px)', paddingTop: '80px', maxWidth: '1400px', margin: '0 auto', padding: '80px 24px 40px', fontFamily: 'Inter, system-ui' }}>
-      <h1 style={{ fontSize: '32px', fontWeight: '800', color: '#064e3b', marginBottom: '8px' }}>Dosage Guide</h1>
-      <p style={{ color: "#059669" }}>Find standard dosages, interactions, side effects, and manage your medications.</p>
+    <>
+      <Navbar />
+      <div style={{ paddingTop: '80px', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter', system-ui, sans-serif" }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 24px' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%)',
+            borderRadius: '24px',
+            padding: '48px 40px',
+            marginBottom: '32px',
+            position: 'relative',
+            overflow: 'hidden',
+            color: 'white'
+          }}>
+            <div style={{ position: 'absolute', top: '-100px', right: '-60px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: '-150px', left: '-80px', width: '400px', height: '400px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.15)', padding: '14px', borderRadius: '14px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <FaPills style={{ fontSize: '2rem', opacity: 0.9 }} />
+                </div>
+                <div>
+                  <h1 style={{ fontSize: '2.2rem', fontWeight: '700', letterSpacing: '-0.5px', margin: 0, textShadow: '0 2px 20px rgba(0,0,0,0.1)' }}>
+                    Dosage Guide
+                  </h1>
+                  <p style={{ fontSize: '1rem', opacity: 0.9, margin: '2px 0 0 0', fontWeight: '300' }}>
+                    {filteredDrugs.length} drugs and medications
+                  </p>
+                </div>
+              </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '28px' }}>
-        {/* Drug Lookup */}
-        <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <h3><FaSearch style={{ color: '#059669', marginRight: '8px' }} /> Drug Lookup</h3>
-          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-            <input type="text" placeholder="Drug name (e.g., paracetamol)" value={drug} onChange={e => setDrug(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '40px', border: '1px solid #cbd5e1' }} />
-            <button onClick={lookupDrug} style={{ background: '#059669', color: 'white', border: 'none', padding: '0 24px', borderRadius: '40px', cursor: 'pointer' }}>Lookup</button>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                gap: '12px',
+                marginTop: '16px'
+              }}>
+                {[
+                  { label: 'Total Drugs', value: drugs.length, icon: FaPills },
+                  { label: 'Categories', value: categories.length - 1, icon: FaFilter },
+                  { label: 'Favorites', value: favorites.filter(f => f.type === 'drug').length, icon: FaHeart },
+                  { label: 'Bookmarks', value: bookmarks.filter(b => b.type === 'drug').length, icon: FaBookmark },
+                ].map((stat, idx) => (
+                  <div key={idx} style={{
+                    background: 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+                    <div style={{ background: 'rgba(255,255,255,0.15)', padding: '6px', borderRadius: '8px' }}>
+                      <stat.icon style={{ fontSize: '1rem', color: 'white' }} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1rem', fontWeight: '700', lineHeight: '1.2' }}>{stat.value}</div>
+                      <div style={{ fontSize: '0.65rem', opacity: 0.8 }}>{stat.label}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          {info && (
-            <div style={{ marginTop: '20px', background: '#f0fdf4', borderRadius: '16px', padding: '16px' }}>
-              {info.error ? <p style={{ color: '#dc2626' }}>{info.error}</p> : (
-                <>
-                  <p><strong>Adult dosage:</strong> {info.adult}</p>
-                  <p><strong>Child dosage:</strong> {info.child}</p>
-                  <p><strong>Note:</strong> {info.note}</p>
-                </>
-              )}
+
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            marginBottom: '24px',
+            flexWrap: 'wrap',
+            alignItems: 'center'
+          }}>
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              background: 'white',
+              borderRadius: '12px',
+              padding: '0 16px',
+              border: '2px solid #e2e8f0',
+              minWidth: '200px',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = emerald; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; }}>
+              <FaSearch style={{ color: '#94a3b8', fontSize: '0.9rem' }} />
+              <input
+                type="text"
+                placeholder="Search 200+ drugs by name, category, or use..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  border: 'none',
+                  padding: '12px 14px',
+                  width: '100%',
+                  outline: 'none',
+                  fontSize: '0.9rem',
+                  fontFamily: 'inherit',
+                  background: 'transparent'
+                }}
+              />
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                style={{
+                  padding: '12px 40px 12px 16px',
+                  borderRadius: '12px',
+                  border: '2px solid #e2e8f0',
+                  background: 'white',
+                  fontSize: '0.9rem',
+                  color: '#1e293b',
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  outline: 'none',
+                  minWidth: '140px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = emerald; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; }}
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <FaFilter style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.8rem', pointerEvents: 'none' }} />
+            </div>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0, fontWeight: '500' }}>
+              Found <span style={{ color: emerald, fontWeight: '700' }}>{filteredDrugs.length}</span> drugs
+            </p>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '20px',
+            marginBottom: '40px'
+          }}>
+            {currentDrugs.map((drug) => {
+              const isFav = isFavorite(drug.id);
+              const isBookmark = isBookmarked(drug.id);
+              const inCart = cartItems?.some(item => item.id === drug.id);
+              const color = getCategoryColor(drug.category);
+
+              return (
+                <div
+                  key={drug.id}
+                  style={{
+                    background: 'white',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    paddingTop: '44px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+                    border: '1px solid #e2e8f0',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '380px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.08)';
+                    e.currentTarget.style.borderColor = emerald;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.06)';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                  }}
+                  onClick={() => navigate(`/dosage-guide/${drug.id}`)}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    top: '12px',
+                    left: '12px',
+                    background: color,
+                    color: 'white',
+                    padding: '3px 12px',
+                    borderRadius: '12px',
+                    fontSize: '0.6rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    zIndex: 5,
+                    maxWidth: '60%'
+                  }}>
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {drug.category || 'General'}
+                    </span>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '10px',
+                    marginTop: '4px'
+                  }}>
+                    <div style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '12px',
+                      background: `${color}15`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.5rem',
+                      color: color,
+                      flexShrink: 0
+                    }}>
+                      💊
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h3 style={{
+                        fontSize: '0.95rem',
+                        fontWeight: '700',
+                        color: '#1e293b',
+                        margin: 0,
+                        lineHeight: '1.2',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical'
+                      }}>
+                        {drug.name}
+                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                        {renderStars(drug.rating || 4.5)}
+                        <span style={{ fontSize: '0.6rem', color: '#94a3b8' }}>({drug.rating || 4.5})</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {drug.dosage && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      marginBottom: '6px',
+                      flexShrink: 0
+                    }}>
+                      <FaClock style={{ color: emerald, fontSize: '0.6rem' }} />
+                      <span style={{ fontSize: '0.7rem', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {drug.dosage}
+                      </span>
+                    </div>
+                  )}
+
+                  <p style={{
+                    fontSize: '0.78rem',
+                    color: '#64748b',
+                    lineHeight: '1.5',
+                    margin: '0 0 12px 0',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    flexShrink: 0
+                  }}>
+                    {drug.description || 'Prescription medication'}
+                  </p>
+
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderTop: '1px solid #f1f5f9',
+                    paddingTop: '12px',
+                    marginTop: 'auto',
+                    flexShrink: 0
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.55rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Price</span>
+                      <div style={{ fontSize: '1.1rem', fontWeight: '700', color: emerald }}>
+                        ₹{drug.price || 299}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(drug.id, { id: drug.id, name: drug.name, type: 'drug', category: drug.category }); }}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          background: isFav ? '#fef2f2' : 'white',
+                          color: isFav ? '#ef4444' : '#94a3b8',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        {isFav ? <FaHeart /> : <FaRegHeart />}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleBookmark(drug.id, { id: drug.id, name: drug.name, type: 'drug', category: drug.category }); }}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          background: isBookmark ? '#fffbeb' : 'white',
+                          color: isBookmark ? '#f59e0b' : '#94a3b8',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        {isBookmark ? <FaBookmark /> : <FaRegBookmark />}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleAddToCart(drug); }}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: inCart ? '#d1fae5' : emerald,
+                          color: inCart ? '#047857' : 'white',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontWeight: '600',
+                          fontSize: '0.7rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <FaShoppingCart style={{ fontSize: '0.65rem' }} />
+                        {inCart ? 'Added' : 'Add'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {totalPages > 1 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '8px',
+              flexWrap: 'wrap',
+              marginTop: '20px',
+              marginBottom: '40px',
+              padding: '16px 0'
+            }}>
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  background: 'white',
+                  color: currentPage === 1 ? '#e2e8f0' : '#64748b',
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontSize: '0.85rem'
+                }}
+              >
+                <FaChevronLeft />
+              </button>
+
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) pageNum = i + 1;
+                else if (currentPage <= 3) pageNum = i + 1;
+                else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                else pageNum = currentPage - 2 + i;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => goToPage(pageNum)}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: currentPage === pageNum ? `2px solid ${emerald}` : '1px solid #e2e8f0',
+                      background: currentPage === pageNum ? emerald : 'white',
+                      color: currentPage === pageNum ? 'white' : '#64748b',
+                      cursor: 'pointer',
+                      fontWeight: currentPage === pageNum ? '700' : '500',
+                      transition: 'all 0.2s ease',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  background: 'white',
+                  color: currentPage === totalPages ? '#e2e8f0' : '#64748b',
+                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontSize: '0.85rem'
+                }}
+              >
+                <FaChevronRight />
+              </button>
             </div>
           )}
         </div>
-
-        {/* Saved Medications */}
-        <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <h3><FaPills style={{ color: '#059669', marginRight: '8px' }} /> My Medications</h3>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-            <input type="text" placeholder="Add medication" value={newMed} onChange={e => setNewMed(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '40px', border: '1px solid #cbd5e1' }} />
-            <button onClick={addSavedMed} style={{ background: '#059669', color: 'white', border: 'none', padding: '0 16px', borderRadius: '40px', cursor: 'pointer' }}><FaPlus /> Add</button>
-          </div>
-          {savedMeds.length === 0 ? <p style={{ marginTop: '16px', color: '#6b7280' }}>No saved medications.</p> : (
-            <ul style={{ marginTop: '16px', listStyle: 'none', padding: 0 }}>
-              {savedMeds.map((med, idx) => (
-                <li key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e5e7eb' }}>
-                  <span>{med}</span>
-                  <button onClick={() => removeSavedMed(idx)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><FaTrash /></button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Refill Reminders */}
-        <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <h3><FaBell style={{ color: '#059669', marginRight: '8px' }} /> Refill Reminders</h3>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-            <input type="text" placeholder="Medication" value={newReminder.med} onChange={e => setNewReminder({...newReminder, med: e.target.value})} style={{ flex: 2, minWidth: '120px', padding: '8px', borderRadius: '40px', border: '1px solid #cbd5e1' }} />
-            <input type="date" value={newReminder.date} onChange={e => setNewReminder({...newReminder, date: e.target.value})} style={{ padding: '8px', borderRadius: '40px', border: '1px solid #cbd5e1' }} />
-            <input type="time" value={newReminder.time} onChange={e => setNewReminder({...newReminder, time: e.target.value})} style={{ padding: '8px', borderRadius: '40px', border: '1px solid #cbd5e1' }} />
-            <button onClick={addReminder} style={{ background: '#059669', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '40px', cursor: 'pointer' }}><FaPlus /> Add</button>
-          </div>
-          {reminders.length === 0 ? <p>No reminders set.</p> : (
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              {reminders.map(r => (
-                <li key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #e5e7eb' }}>
-                  <span>{r.med} – {r.date} at {r.time}</span>
-                  <button onClick={() => removeReminder(r.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><FaTrash /></button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Interaction Checker */}
-        <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <h3><FaExclamationTriangle style={{ color: '#059669', marginRight: '8px' }} /> Interaction Checker</h3>
-          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-            <input type="text" placeholder="Drug name" value={interactionDrug} onChange={e => setInteractionDrug(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '40px', border: '1px solid #cbd5e1' }} />
-            <button onClick={checkInteraction} style={{ background: '#059669', color: 'white', border: 'none', padding: '0 24px', borderRadius: '40px', cursor: 'pointer' }}>Check</button>
-          </div>
-          {interactionResult && <div style={{ marginTop: '16px', background: '#fef3c7', padding: '12px', borderRadius: '16px' }}>{interactionResult}</div>}
-        </div>
-
-        {/* Side Effect Checker */}
-        <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <h3><FaInfoCircle style={{ color: '#059669', marginRight: '8px' }} /> Side Effect Checker</h3>
-          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-            <input type="text" placeholder="Drug name" value={sideEffectDrug} onChange={e => setSideEffectDrug(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '40px', border: '1px solid #cbd5e1' }} />
-            <button onClick={checkSideEffect} style={{ background: '#059669', color: 'white', border: 'none', padding: '0 24px', borderRadius: '40px', cursor: 'pointer' }}>Check</button>
-          </div>
-          {sideEffectResult && <div style={{ marginTop: '16px', background: '#fee2e2', padding: '12px', borderRadius: '16px', color: '#991b1b' }}>{sideEffectResult}</div>}
-        </div>
-
-        {/* Dosage Calculator (pediatric) */}
-        <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <h3><FaCalculator style={{ color: '#059669', marginRight: '8px' }} /> Pediatric Dosage Calculator</h3>
-          <div style={{ display: 'grid', gap: '12px', marginTop: '16px' }}>
-            <input type="number" placeholder="Weight (kg)" value={weight} onChange={e => setWeight(e.target.value)} style={{ padding: '10px', borderRadius: '40px', border: '1px solid #cbd5e1' }} />
-            <input type="text" placeholder="Medication (paracetamol / ibuprofen)" value={calcMed} onChange={e => setCalcMed(e.target.value)} style={{ padding: '10px', borderRadius: '40px', border: '1px solid #cbd5e1' }} />
-            <button onClick={calculateDosage} style={{ background: '#059669', color: 'white', border: 'none', padding: '10px', borderRadius: '40px', cursor: 'pointer' }}>Calculate</button>
-          </div>
-          {calcResult && <div style={{ marginTop: '16px', background: '#ecfdf5', padding: '12px', borderRadius: '16px' }}>{calcResult}</div>}
-        </div>
-
-        {/* Educational Resources & Export */}
-        <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <h3><FaBook style={{ color: '#059669', marginRight: '8px' }} /> Resources & Export</h3>
-          <div style={{ marginTop: '16px' }}>
-            <p><a href="https://www.youtube.com/results?search_query=how+to+read+prescription+label" target="_blank" rel="noopener noreferrer" style={{ color: '#059669' }}><FaYoutube style={{ marginRight: '6px' }} /> How to Read Prescription Labels</a></p>
-            <p><a href="https://www.fda.gov/drugs" target="_blank" rel="noopener noreferrer" style={{ color: '#059669' }}><FaUserMd /> FDA Drug Information</a></p>
-            <p><a href="https://www.cdc.gov/medication-safety/index.html" target="_blank" rel="noopener noreferrer" style={{ color: '#059669' }}>CDC Medication Safety</a></p>
-            <button onClick={exportData} style={{ marginTop: '16px', background: '#059669', color: 'white', border: 'none', padding: '10px', borderRadius: '40px', width: '100%', cursor: 'pointer' }}><FaDownload /> Export Data (JSON)</button>
-          </div>
-        </div>
       </div>
-    </div>
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+      <Footer />
+      </>
   );
 };
 
 export default DosageGuide;
-

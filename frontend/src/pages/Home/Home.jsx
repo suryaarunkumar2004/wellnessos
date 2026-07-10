@@ -1,207 +1,256 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaHeadset, FaUserMd, FaHeartbeat, FaChartLine, FaSmile, FaLaptopMedical, FaCalendarAlt, FaEnvelope, FaTwitter, FaFacebook, FaInstagram, FaArrowRight } from 'react-icons/fa';
+import { FaHeadset, FaUserMd, FaHeartbeat, FaPills, FaArrowRight } from 'react-icons/fa';
+import Navbar from '../../components/Navbar/Navbar';
+import Footer from '../../components/Footer/Footer';
 
 const Home = () => {
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
+  const emerald = '#059669';
+  const emeraldLight = '#ecfdf5';
+  const emeraldDark = '#047857';
 
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    if (email) {
-      setSubscribed(true);
-      setEmail('');
-      setTimeout(() => setSubscribed(false), 3000);
-    }
-  };
+  const features = [
+    { icon: FaHeadset, title: '24/7 Support', description: 'Round-the-clock assistance for all your health queries' },
+    { icon: FaUserMd, title: 'Expert Doctors', description: 'Consult with top healthcare professionals' },
+    { icon: FaHeartbeat, title: 'Health Tracker', description: 'Monitor your health metrics in real-time' },
+  ];
 
-  // Animated counter effect (simplified)
-  const [counters, setCounters] = useState({ patients: 0, doctors: 0, years: 0 });
-  useEffect(() => {
-    const targets = { patients: 50000, doctors: 100, years: 5 };
-    const interval = setInterval(() => {
-      setCounters(prev => {
-        let newCounters = { ...prev };
-        let done = true;
-        for (let key in targets) {
-          if (prev[key] < targets[key]) {
-            newCounters[key] = Math.min(prev[key] + Math.ceil(targets[key] / 50), targets[key]);
-            done = false;
-          }
-        }
-        if (done) clearInterval(interval);
-        return newCounters;
-      });
-    }, 30);
-    return () => clearInterval(interval);
-  }, []);
-
-  const healthTips = [
-    { title: 'Stay Hydrated', desc: 'Drink 8 glasses of water daily for optimal health.', link: '/blog/hydration' },
-    { title: 'Regular Exercise', desc: '30 minutes of activity can boost mood and energy.', link: '/blog/exercise' },
-    { title: 'Mindfulness', desc: '5 minutes of meditation reduces stress.', link: '/blog/mindfulness' },
+  const services = [
+    { icon: FaUserMd, title: 'Find Doctors', desc: 'Connect with top specialists', link: '/doctors' },
+    { icon: FaPills, title: 'Dosage Guide', desc: 'Medication information', link: '/dosage-guide' },
+    { icon: FaHeartbeat, title: 'Health Tracker', desc: 'Track your wellness', link: '/health-tracker' },
   ];
 
   return (
-    <div style={{ paddingTop: '0px', fontFamily: 'Inter, system-ui, sans-serif' }}>
-      {/* Hero Section */}
-      <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)', padding: '60px 24px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '48px', fontWeight: '800', color: '#064e3b', lineHeight: '1.2', marginBottom: '16px' }}>
-            Your Health,<br /><span style={{ color: '#059669' }}>Our Priority</span>
-          </h1>
-          <p style={{ fontSize: '18px', color: '#4b5563', maxWidth: '600px', margin: '0 auto 32px' }}>
-            Book appointments, consult experts, track your health and achieve your wellness goals.
-          </p>
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/book-appointment" style={{ background: '#059669', color: 'white', padding: '12px 28px', borderRadius: '40px', textDecoration: 'none', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-              Book Appointment <FaCalendarAlt />
-            </Link>
-            <Link to="/services" style={{ background: 'white', color: '#059669', border: '1px solid #059669', padding: '12px 28px', borderRadius: '40px', textDecoration: 'none', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-              Explore Services <FaArrowRight />
-            </Link>
+    <>
+      <Navbar />
+      <div style={{
+        minHeight: '100vh',
+        background: '#f8fafc',
+        fontFamily: "'Inter', system-ui, sans-serif"
+      }}>
+        <style>{`
+          @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes floatBubble {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-15px) scale(1.05); }
+            100% { transform: translateY(0) scale(1); }
+          }
+          .premium-fade-1 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+          .premium-fade-2 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards; opacity: 0; }
+          .premium-fade-3 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; opacity: 0; }
+          .bubble-float-1 { animation: floatBubble 8s ease-in-out infinite; }
+          .bubble-float-2 { animation: floatBubble 12s ease-in-out infinite 1s; }
+          .premium-card {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          }
+          .premium-card:hover {
+            transform: translateY(-6px) !important;
+            box-shadow: 0 16px 40px rgba(5, 150, 105, 0.08) !important;
+            border-color: #a7f3d0 !important;
+          }
+          .service-card {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          }
+          .service-card:hover {
+            transform: translateY(-6px) !important;
+            background: #ecfdf5 !important;
+            border-color: #10b981 !important;
+            box-shadow: 0 16px 40px rgba(5, 150, 105, 0.08) !important;
+          }
+        `}</style>
+
+        {/* Hero Section */}
+        <div style={{
+          background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #065f46 100%)',
+          padding: '130px 20px 90px',
+          textAlign: 'center',
+          color: 'white',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div className="bubble-float-1" style={{
+            position: 'absolute',
+            top: '-100px',
+            right: '-100px',
+            width: '400px',
+            height: '400px',
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.06)',
+            pointerEvents: 'none'
+          }} />
+          <div className="bubble-float-2" style={{
+            position: 'absolute',
+            bottom: '-150px',
+            left: '-80px',
+            width: '500px',
+            height: '500px',
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.04)',
+            pointerEvents: 'none'
+          }} />
+          <div style={{ position: 'relative', zIndex: 1, maxWidth: '800px', margin: '0 auto' }}>
+            <h1 className="premium-fade-1" style={{
+              fontSize: '3.6rem',
+              fontWeight: '900',
+              letterSpacing: '-1.5px',
+              marginBottom: '20px',
+              lineHeight: '1.15',
+              textShadow: '0 4px 30px rgba(0,0,0,0.15)'
+            }}>
+              Your Health, Our Priority
+            </h1>
+            <p className="premium-fade-2" style={{
+              fontSize: '1.25rem',
+              opacity: 0.95,
+              maxWidth: '620px',
+              margin: '0 auto 36px',
+              lineHeight: '1.7',
+              fontWeight: '300'
+            }}>
+              Connect with top doctors, track your health metrics, and manage your wellness journey all in one place.
+            </p>
+            <div className="premium-fade-3" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link to="/doctors" style={{
+                padding: '16px 36px',
+                borderRadius: '14px',
+                background: 'white',
+                color: '#059669',
+                fontWeight: '700',
+                textDecoration: 'none',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)'; }}>
+                Find a Doctor
+              </Link>
+              <Link to="/services" style={{
+                padding: '16px 36px',
+                borderRadius: '14px',
+                background: 'rgba(255,255,255,0.15)',
+                color: 'white',
+                fontWeight: '600',
+                textDecoration: 'none',
+                border: '1px solid rgba(255,255,255,0.25)',
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(12px)'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.25)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+                Explore Services
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Stats Section */}
-      <div style={{ background: 'white', padding: '48px 24px', borderBottom: '1px solid #e5e7eb' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', gap: '32px', textAlign: 'center' }}>
-          <div>
-            <div style={{ fontSize: '40px', fontWeight: '800', color: '#059669' }}>{counters.patients.toLocaleString()}+</div>
-            <div style={{ color: "#059669" }}>Happy Patients</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '40px', fontWeight: '800', color: '#059669' }}>{counters.doctors}+</div>
-            <div style={{ color: "#059669" }}>Expert Doctors</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '40px', fontWeight: '800', color: '#059669' }}>{counters.years}+</div>
-            <div style={{ color: "#059669" }}>Years of Excellence</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Core Services */}
-      <div style={{ padding: '60px 24px', background: '#f9fafb' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#064e3b', textAlign: 'center', marginBottom: '48px' }}>Our Core Services</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '32px' }}>
-            <div style={{ background: 'white', padding: '28px', borderRadius: '24px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <FaHeadset style={{ fontSize: '48px', color: '#059669', marginBottom: '16px' }} />
-              <h3 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '8px' }}>24/7 Support</h3>
-              <p style={{ color: '#6b7280' }}>We are here for your care</p>
-            </div>
-            <div style={{ background: 'white', padding: '28px', borderRadius: '24px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <FaUserMd style={{ fontSize: '48px', color: '#059669', marginBottom: '16px' }} />
-              <h3 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '8px' }}>Expert Doctors</h3>
-              <p style={{ color: '#6b7280' }}>100+ certified specialists</p>
-            </div>
-            <div style={{ background: 'white', padding: '28px', borderRadius: '24px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <FaHeartbeat style={{ fontSize: '48px', color: '#059669', marginBottom: '16px' }} />
-              <h3 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '8px' }}>Health Tracker</h3>
-              <p style={{ color: '#6b7280' }}>Track your daily progress</p>
-            </div>
-            <div style={{ background: 'white', padding: '28px', borderRadius: '24px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <FaChartLine style={{ fontSize: '48px', color: '#059669', marginBottom: '16px' }} />
-              <h3 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '8px' }}>Rx Checker</h3>
-              <p style={{ color: '#6b7280' }}>Medication safety</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Featured Programs */}
-      <div style={{ padding: '60px 24px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#064e3b', textAlign: 'center', marginBottom: '48px' }}>Featured Wellness Programs</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
-            <div style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <div style={{ background: '#059669', padding: '40px 20px', textAlign: 'center', color: 'white' }}>
-                <FaSmile style={{ fontSize: '48px' }} />
-              </div>
-              <div style={{ padding: '24px' }}>
-                <h3 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '12px' }}>Stress Management</h3>
-                <p style={{ color: "#059669" }}>8-week guided program to reduce stress and improve mental wellbeing.</p>
-                <Link to="/services" style={{ color: '#059669', fontWeight: '600', textDecoration: 'none' }}>Learn More →</Link>
-              </div>
-            </div>
-            <div style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <div style={{ background: '#10b981', padding: '40px 20px', textAlign: 'center', color: 'white' }}>
-                <FaLaptopMedical style={{ fontSize: '48px' }} />
-              </div>
-              <div style={{ padding: '24px' }}>
-                <h3 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '12px' }}>Virtual Consultations</h3>
-                <p style={{ color: "#059669" }}>Connect with top doctors from the comfort of your home.</p>
-                <Link to="/book-appointment" style={{ color: '#059669', fontWeight: '600', textDecoration: 'none' }}>Book Now →</Link>
-              </div>
-            </div>
-            <div style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <div style={{ background: '#047857', padding: '40px 20px', textAlign: 'center', color: 'white' }}>
-                <FaHeartbeat style={{ fontSize: '48px' }} />
-              </div>
-              <div style={{ padding: '24px' }}>
-                <h3 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '12px' }}>Cardio Fitness</h3>
-                <p style={{ color: "#059669" }}>Personalized fitness plans for a healthier heart.</p>
-                <Link to="/health-tracker" style={{ color: '#059669', fontWeight: '600', textDecoration: 'none' }}>Get Started →</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Testimonials */}
-      <div style={{ background: '#ecfdf5', padding: '60px 24px' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#064e3b', marginBottom: '32px' }}>What Our Patients Say</h2>
-          <div style={{ background: 'white', borderRadius: '24px', padding: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-            <p style={{ fontSize: '18px', fontStyle: 'italic', color: '#1f2937', marginBottom: '24px' }}>“WellnessOS transformed my health. The doctors are top-notch and the tracker helped me stay consistent.”</p>
-            <div style={{ fontWeight: '700', color: '#059669' }}>— Sarah Johnson</div>
-            <div style={{ fontSize: '14px', color: '#6b7280' }}>Verified Patient</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Health Tips / Blog Preview */}
-      <div style={{ padding: '60px 24px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#064e3b', textAlign: 'center', marginBottom: '48px' }}>Health Tips</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
-            {healthTips.map((tip, idx) => (
-              <div key={idx} style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-                <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#064e3b', marginBottom: '12px' }}>{tip.title}</h3>
-                <p style={{ color: "#059669" }}>{tip.desc}</p>
-                <Link to={tip.link} style={{ color: '#059669', fontWeight: '500', textDecoration: 'none' }}>Read more →</Link>
+        {/* Features Section */}
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '70px 20px' }}>
+          <h2 style={{
+            fontSize: '2.1rem',
+            fontWeight: '800',
+            color: '#1e293b',
+            textAlign: 'center',
+            marginBottom: '44px',
+            letterSpacing: '-0.75px'
+          }}>
+            Why Choose <span style={{ color: emerald }}>WellNest</span>
+          </h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '32px'
+          }}>
+            {features.map((feature, index) => (
+              <div key={index} className="premium-card" style={{
+                background: 'white',
+                padding: '36px 30px',
+                borderRadius: '20px',
+                boxShadow: '0 4px 30px rgba(0,0,0,0.03)',
+                border: '1px solid #f1f5f9',
+                textAlign: 'center',
+                cursor: 'default'
+              }}>
+                <div style={{
+                  width: '70px',
+                  height: '70px',
+                  borderRadius: '18px',
+                  background: emeraldLight,
+                  color: emerald,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 20px',
+                  fontSize: '2.2rem'
+                }}>
+                  <feature.icon />
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1e293b', marginBottom: '10px' }}>{feature.title}</h3>
+                <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: '1.65' }}>{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
-      </div>
 
-      {/* Newsletter Signup */}
-      <div style={{ background: '#f0fdf4', padding: '60px 24px', textAlign: 'center' }}>
-        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <h2 style={{ fontSize: '28px', fontWeight: '800', color: '#064e3b', marginBottom: '16px' }}>Stay Updated</h2>
-          <p style={{ color: "#059669" }}>Subscribe to our newsletter for health tips and exclusive offers.</p>
-          <form onSubmit={handleSubscribe} style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
-            <input type="email" placeholder="Your email address" value={email} onChange={e => setEmail(e.target.value)} required style={{ padding: '12px 20px', borderRadius: '40px', border: '1px solid #cbd5e1', flex: '1', minWidth: '200px' }} />
-            <button type="submit" style={{ background: '#059669', color: 'white', border: 'none', padding: '12px 28px', borderRadius: '40px', fontWeight: '600', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}><FaEnvelope /> Subscribe</button>
-          </form>
-          {subscribed && <div style={{ marginTop: '16px', color: '#059669', fontWeight: '500' }}>Thanks for subscribing!</div>}
+        {/* Services Section */}
+        <div style={{ background: 'white', padding: '70px 20px' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <h2 style={{
+              fontSize: '2.1rem',
+              fontWeight: '800',
+              color: '#1e293b',
+              textAlign: 'center',
+              marginBottom: '44px',
+              letterSpacing: '-0.75px'
+            }}>
+              Our <span style={{ color: emerald }}>Services</span>
+            </h2>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '28px'
+            }}>
+              {services.map((service, index) => (
+                <Link key={index} to={service.link} className="service-card" style={{
+                  textDecoration: 'none',
+                  background: '#f8fafc',
+                  padding: '36px 30px',
+                  borderRadius: '20px',
+                  border: '1px solid #f1f5f9',
+                  textAlign: 'center',
+                  display: 'block'
+                }}>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '16px',
+                    background: 'white',
+                    color: emerald,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 16px',
+                    fontSize: '1.8rem',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+                  }}>
+                    <service.icon />
+                  </div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#1e293b', marginBottom: '6px' }}>{service.title}</h3>
+                  <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '12px' }}>{service.desc}</p>
+                  <FaArrowRight style={{ color: emerald, fontSize: '0.85rem' }} />
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Call to Action */}
-      <div style={{ background: 'linear-gradient(135deg, #059669, #10b981)', padding: '60px 24px', textAlign: 'center', color: 'white' }}>
-        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '16px' }}>Ready to start your wellness journey?</h2>
-          <p style={{ fontSize: '18px', marginBottom: '32px', opacity: 0.9 }}>Join thousands of happy patients who trust WellnessOS.</p>
-          <Link to="/signup" style={{ background: 'white', color: '#059669', padding: '14px 32px', borderRadius: '40px', textDecoration: 'none', fontWeight: '700', display: 'inline-block' }}>Join Now – It's Free</Link>
-        </div>
-      </div>
-    </div>
+      <Footer />
+    </>
   );
 };
 
 export default Home;
-

@@ -1,34 +1,48 @@
 version: '3.8'
 
 services:
-  wellnessos-app:
-    build: .
-    container_name: wellnessos-backend
-    ports:
-      - "5000:5000"
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:mysql://wellnessos-rds-db:3306/altheal_prod_db?createDatabaseIfNotExist=true&useSSL=false
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=aws_production_secure_pass_123
-    depends_on:
-      wellnessos-rds-db:
-        condition: service_healthy
-    networks:
-      - wellness-network
-
-  wellnessos-rds-db:
+  wellnessos-mysql:
     image: mysql:8.0
     container_name: wellnessos-mysql
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=aws_production_secure_pass_123
-      - MYSQL_DATABASE=altheal_prod_db
+      - MYSQL_ROOT_PASSWORD=Root@12345
+      - MYSQL_DATABASE=wellnessos
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pRoot@12345"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - wellness-network
+
+  wellnessos-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wellnessos-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://wellnessos-mysql:3306/wellnessos?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=Root@12345
+    depends_on:
+      wellnessos-mysql:
+        condition: service_healthy
+    networks:
+      - wellness-network
+
+  wellnessos-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wellnessos-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - wellnessos-backend
     networks:
       - wellness-network
 

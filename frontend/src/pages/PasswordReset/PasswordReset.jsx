@@ -1,12 +1,10 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 
 export default function PasswordReset() {
   const { token } = useParams();
   const navigate = useNavigate();
-  const { verifyResetToken, resetPassword, user } = useAuth();
   const { addToast } = useToast();
 
   // Attempt verification on mount
@@ -21,7 +19,6 @@ export default function PasswordReset() {
     e.preventDefault();
     // Placeholder: just show success toast
     addToast('Password reset token verified (placeholder).', 'success');
-    navigate('/login');
   };
 
   return (
@@ -35,7 +32,8 @@ export default function PasswordReset() {
       ) : (
         <p>No token provided.</p>
       )}
-    </div>
+      <Footer />
+      </div>
   );
 }
 

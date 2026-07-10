@@ -1,0 +1,22 @@
+-- Update blog posts with video URLs and more detailed content
+UPDATE blog_posts SET 
+  video_url = CASE id
+    WHEN 1 THEN 'https://www.youtube.com/embed/3m5MOz4p7Qs'
+    WHEN 2 THEN 'https://www.youtube.com/embed/2Yj5Cz0eA4U'  
+    WHEN 3 THEN 'https://www.youtube.com/embed/1HcG4VHj7Q0'
+    WHEN 4 THEN 'https://www.youtube.com/embed/5LzBqF9XZ0E'
+    WHEN 5 THEN 'https://www.youtube.com/embed/7PqKqZn8JzE'
+    WHEN 6 THEN 'https://www.youtube.com/embed/9RtRgVwL8wI'
+    ELSE 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+  END,
+  content = CASE id
+    WHEN 1 THEN 'Heart disease remains the leading cause of death worldwide, but the good news is that many cases are preventable. This comprehensive guide dives deep into the latest advances in heart disease prevention, diagnosis, and treatment options. \n\n## Understanding the Basics\n\nHeart disease refers to several types of heart conditions. The most common type in the United States is coronary artery disease (CAD), which affects the blood flow to the heart. \n\n## Risk Factors\n\n- High blood pressure\n- High cholesterol\n- Smoking\n- Diabetes\n- Obesity\n- Family history\n- Age\n\n## Prevention Strategies\n\n1. **Regular Exercise**: At least 150 minutes of moderate activity per week\n2. **Healthy Diet**: Mediterranean diet, rich in fruits, vegetables, whole grains\n3. **Stress Management**: Meditation, yoga, adequate sleep\n4. **Regular Check-ups**: Monitor blood pressure, cholesterol, blood sugar\n\n## Treatment Options\n\nTreatment depends on the specific condition but may include:\n- Lifestyle changes\n- Medications (statins, blood pressure medications)\n- Surgical procedures (angioplasty, bypass surgery)\n\n## Living with Heart Disease\n\nManaging heart disease is a lifelong journey. Regular follow-ups with your cardiologist, medication adherence, and lifestyle modifications are key to living a full and active life.'
+    WHEN 2 THEN 'Early detection of heart conditions can save lives. Here are 5 critical signs that require immediate attention from a cardiologist:\n\n## 1. Chest Pain or Discomfort\n\nChest pain is the most common symptom of heart problems. It may feel like pressure, squeezing, fullness, or pain in the center of the chest. \n\n## 2. Shortness of Breath\n\nIf you find yourself getting winded from activities that used to be easy, it could be a sign of heart issues.\n\n## 3. Palpitations\n\nIrregular heartbeats or a feeling that your heart is racing could indicate arrhythmia or other heart conditions.\n\n## 4. Dizziness or Lightheadedness\n\nFrequent dizziness could be a sign of low blood pressure or heart rhythm problems.\n\n## 5. Swelling in Legs\n\nSwelling in your legs, ankles, or feet could be a sign of heart failure or poor circulation.\n\n## When to See a Doctor\n\nIf you experience any of these symptoms, especially if they occur together, schedule an appointment with a cardiologist immediately.'
+    WHEN 3 THEN 'Heart surgery can be daunting, but with the right preparation and knowledge, you can approach it with confidence. This guide walks you through every step of the journey.\n\n## Before Surgery\n\n### Preparation Steps:\n1. Complete all pre-operative tests\n2. Discuss all medications with your surgeon\n3. Arrange for help during recovery\n4. Prepare your home for recovery\n\n### What to Expect:\n- Hospital stay: 3-7 days\n- Recovery time: 6-12 weeks\n- Follow-up visits: Regular\n\n## Types of Heart Surgery\n\n### 1. Coronary Artery Bypass Grafting (CABG)\n\nThe most common heart surgery, CABG creates new pathways for blood to flow to the heart.\n\n### 2. Valve Repair or Replacement\n\nReplacing damaged heart valves with mechanical or biological valves.\n\n### 3. Heart Transplant\n\nFor end-stage heart failure, a heart transplant may be necessary.\n\n## Recovery Timeline\n\n- **Week 1-2**: Hospital stay, initial recovery\n- **Week 3-6**: Gradual return to daily activities\n- **Week 6-12**: Return to work (depending on your job)\n- **3-6 months**: Full recovery, cardiac rehabilitation\n\n## Tips for Successful Recovery\n\n1. Follow all post-surgery instructions\n2. Attend cardiac rehabilitation\n3. Take all medications as prescribed\n4. Listen to your body'
+    ELSE content
+  END
+WHERE id IN (1,2,3,4,5,6);
+
+-- Add more detailed content for all posts
+UPDATE blog_posts SET 
+  content = CONCAT(content, '\n\n---\n\n*Disclaimer: This information is for educational purposes only. Always consult with your healthcare provider for medical advice.*');

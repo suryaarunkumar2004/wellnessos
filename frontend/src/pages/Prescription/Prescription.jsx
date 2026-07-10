@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Footer from '../../components/Footer/Footer';
 import { usePrescription } from '../../contexts/PrescriptionContext';
 import { Link } from 'react-router-dom';
 import { Pill, Plus } from 'lucide-react';
@@ -62,7 +63,8 @@ export default function Prescription() {
           </Link>
         ))}
       </div>
-    </div>
+      <Footer />
+      </div>
   );
 }
 

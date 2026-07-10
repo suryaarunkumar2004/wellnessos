@@ -11,7 +11,8 @@ export default function EmailVerification() {
       ) : (
         <p>No verification token provided.</p>
       )}
-    </div>
+      <Footer />
+      </div>
   );
 }
 
