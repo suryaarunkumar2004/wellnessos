@@ -361,7 +361,7 @@ const Doctors = () => {
           {/* Doctors Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 360px))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
             gap: '24px',
             marginBottom: '40px',
             justifyContent: 'center'
@@ -376,11 +376,14 @@ const Doctors = () => {
                   style={{
                     background: 'white',
                     borderRadius: '16px',
-                    padding: '24px',
+                    padding: '16px',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
                     border: '1px solid #e2e8f0',
                     transition: 'all 0.3s ease',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '300px'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';
@@ -394,13 +397,13 @@ const Doctors = () => {
                   }}
                   onClick={() => navigate(`/doctors/${doctor.id}`)}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
                     <img
                       src={doctor.image}
                       alt={doctor.name}
                       style={{
-                        width: '64px',
-                        height: '64px',
+                        width: '56px',
+                        height: '56px',
                         borderRadius: '50%',
                         objectFit: 'cover',
                         border: `3px solid ${emeraldLight}`,
@@ -408,15 +411,15 @@ const Doctors = () => {
                       }}
                     />
                     <div style={{ flex: 1 }}>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1e293b', margin: '0 0 2px 0' }}>
+                      <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b', margin: '0 0 2px 0' }}>
                         {doctor.name}
                       </h3>
-                      <p style={{ fontSize: '0.85rem', color: emerald, fontWeight: '600', margin: '0 0 4px 0' }}>
+                      <p style={{ fontSize: '0.8rem', color: emerald, fontWeight: '600', margin: '0 0 4px 0' }}>
                         {doctor.specialty || 'General Medicine'}
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {renderStars(doctor.rating || 4.5)}
-                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                        <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
                           {doctor.rating || 4.5}
                         </span>
                       </div>
@@ -424,10 +427,10 @@ const Doctors = () => {
                   </div>
 
                   <p style={{
-                    fontSize: '0.85rem',
+                    fontSize: '0.8rem',
                     color: '#64748b',
-                    lineHeight: '1.5',
-                    margin: '0 0 16px 0',
+                    lineHeight: '1.4',
+                    margin: '0 0 10px 0',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
@@ -439,20 +442,20 @@ const Doctors = () => {
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '16px',
-                    marginBottom: '16px',
+                    gap: '12px',
+                    marginBottom: '10px',
                     flexWrap: 'wrap'
                   }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#94a3b8' }}>
-                      <FaClock style={{ fontSize: '0.6rem', color: emerald }} />
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: '#94a3b8' }}>
+                      <FaClock style={{ fontSize: '0.55rem', color: emerald }} />
                       {doctor.experience || 5} years exp
                     </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#94a3b8' }}>
-                      <FaMapMarkerAlt style={{ fontSize: '0.6rem', color: emerald }} />
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: '#94a3b8' }}>
+                      <FaMapMarkerAlt style={{ fontSize: '0.55rem', color: emerald }} />
                       {doctor.location || 'Remote'}
                     </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#22c55e' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: '#22c55e' }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
                       Available
                     </span>
                   </div>
@@ -462,9 +465,11 @@ const Doctors = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     borderTop: '1px solid #f1f5f9',
-                    paddingTop: '16px',
+                    paddingTop: '12px',
                     flexWrap: 'wrap',
-                    gap: '8px'
+                    gap: '8px',
+                    marginTop: 'auto',
+                    flexShrink: 0
                   }}>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button

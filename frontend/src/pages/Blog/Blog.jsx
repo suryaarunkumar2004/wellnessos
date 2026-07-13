@@ -507,7 +507,7 @@ const Blog = () => {
 
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fit, minmax(280px, 360px))' : '1fr', 
+            gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fit, minmax(280px, 1fr))' : '1fr', 
             gap: viewMode === 'grid' ? '24px' : '12px', 
             marginBottom: '32px', 
             alignItems: 'stretch',

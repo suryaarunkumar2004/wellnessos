@@ -347,8 +347,8 @@ const Services = () => {
                   style={{
                     background: 'white',
                     borderRadius: '16px',
-                    padding: '20px',
-                    paddingTop: '44px',
+                    padding: '16px',
+                    paddingTop: '36px',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
                     border: '1px solid #e2e8f0',
                     transition: 'all 0.3s ease',
@@ -357,7 +357,7 @@ const Services = () => {
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    height: '380px'
+                    height: '290px'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';

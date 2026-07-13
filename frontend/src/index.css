@@ -66,6 +66,17 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.25) !important;
 }
 
+/* Prevent double box / focus outline for borderless inputs inside styled containers */
+input[style*="border: none"]:focus,
+input[style*="border:none"]:focus,
+input[style*="border-style: none"]:focus,
+input[style*="border-style:none"]:focus,
+input.border-none:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 select option:checked {
   box-shadow: 0 0 10px 100px #059669 inset !important;
   background-color: #059669 !important;

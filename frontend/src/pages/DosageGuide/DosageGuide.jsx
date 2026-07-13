@@ -300,8 +300,8 @@ const DosageGuide = () => {
                   style={{
                     background: 'white',
                     borderRadius: '16px',
-                    padding: '20px',
-                    paddingTop: '44px',
+                    padding: '16px',
+                    paddingTop: '36px',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
                     border: '1px solid #e2e8f0',
                     transition: 'all 0.3s ease',
@@ -310,7 +310,7 @@ const DosageGuide = () => {
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    height: '380px'
+                    height: '290px'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';
@@ -429,7 +429,7 @@ const DosageGuide = () => {
                     <div>
                       <span style={{ fontSize: '0.55rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Price</span>
                       <div style={{ fontSize: '1.1rem', fontWeight: '700', color: emerald }}>
-                        ₹{drug.price || 299}
+                        ${drug.price || 299}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '6px' }}>
@@ -495,27 +495,16 @@ const DosageGuide = () => {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: '8px',
+              gap: '6px',
               flexWrap: 'wrap',
-              marginTop: '20px',
-              marginBottom: '40px',
-              padding: '16px 0'
+              marginBottom: '40px'
             }}>
-              <button
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  background: 'white',
-                  color: currentPage === 1 ? '#e2e8f0' : '#64748b',
-                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s ease',
-                  fontSize: '0.85rem'
-                }}
-              >
-                <FaChevronLeft />
+              <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} style={{
+                padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0',
+                background: 'transparent', cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                color: currentPage === 1 ? '#94a3b8' : '#1e293b', opacity: currentPage === 1 ? 0.5 : 1
+              }}>
+                <FaArrowLeft />
               </button>
 
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -525,41 +514,24 @@ const DosageGuide = () => {
                 else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
                 else pageNum = currentPage - 2 + i;
                 return (
-                  <button
-                    key={pageNum}
-                    onClick={() => goToPage(pageNum)}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      border: currentPage === pageNum ? `2px solid ${emerald}` : '1px solid #e2e8f0',
-                      background: currentPage === pageNum ? emerald : 'white',
-                      color: currentPage === pageNum ? 'white' : '#64748b',
-                      cursor: 'pointer',
-                      fontWeight: currentPage === pageNum ? '700' : '500',
-                      transition: 'all 0.2s ease',
-                      fontSize: '0.85rem'
-                    }}
-                  >
+                  <button key={pageNum} onClick={() => goToPage(pageNum)} style={{
+                    padding: '8px 14px', borderRadius: '8px',
+                    border: currentPage === pageNum ? `2px solid ${emerald}` : '1px solid #e2e8f0',
+                    background: currentPage === pageNum ? emerald : 'transparent',
+                    color: currentPage === pageNum ? 'white' : '#1e293b',
+                    cursor: 'pointer', fontWeight: currentPage === pageNum ? '700' : '500'
+                  }}>
                     {pageNum}
                   </button>
                 );
               })}
 
-              <button
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  background: 'white',
-                  color: currentPage === totalPages ? '#e2e8f0' : '#64748b',
-                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s ease',
-                  fontSize: '0.85rem'
-                }}
-              >
-                <FaChevronRight />
+              <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} style={{
+                padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0',
+                background: 'transparent', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                color: currentPage === totalPages ? '#94a3b8' : '#1e293b', opacity: currentPage === totalPages ? 0.5 : 1
+              }}>
+                <FaArrowRight />
               </button>
             </div>
           )}

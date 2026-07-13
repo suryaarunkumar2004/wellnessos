@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FaVideo, FaUserMd, FaStar, FaClock, FaCheckCircle,
-  FaShieldAlt, FaLock, FaArrowRight, FaSearch, FaFilter,
+  FaShieldAlt, FaLock, FaArrowRight, FaArrowLeft, FaSearch, FaFilter,
   FaHeartbeat, FaCalendarAlt, FaPhoneAlt, FaMapMarkerAlt,
   FaRegClock, FaChevronRight, FaBolt, FaGlobe,
   FaRegHeart, FaHeart, FaBookmark, FaRegBookmark
@@ -92,6 +92,12 @@ const Telehealth = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
   const [startingSession, setStartingSession] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const doctorsPerPage = 8;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedSpecialty]);
 
   const filtered = TELEHEALTH_DOCTORS.filter(doc => {
     const matchesSearch =
@@ -100,6 +106,18 @@ const Telehealth = () => {
     const matchesSpecialty = selectedSpecialty === 'All' || doc.specialty === selectedSpecialty;
     return matchesSearch && matchesSpecialty;
   });
+
+  const totalPages = Math.ceil(filtered.length / doctorsPerPage);
+  const indexOfLastDoctor = currentPage * doctorsPerPage;
+  const indexOfFirstDoctor = indexOfLastDoctor - doctorsPerPage;
+  const currentDoctors = filtered.slice(indexOfFirstDoctor, indexOfLastDoctor);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const handleStartConsultation = (doctor) => {
     setStartingSession(doctor.id);
@@ -325,12 +343,12 @@ const Telehealth = () => {
           {/* Doctors Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 360px))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
             gap: '24px',
-            marginBottom: '48px',
+            marginBottom: '40px',
             justifyContent: 'center'
           }}>
-            {filtered.map(doctor => {
+            {currentDoctors.map(doctor => {
               const isFav = isFavorite(doctor.id);
               const isBook = isBookmarked(doctor.id);
               const isStarting = startingSession === doctor.id;
@@ -342,7 +360,10 @@ const Telehealth = () => {
                   border: '1px solid #e2e8f0',
                   boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
                   overflow: 'hidden',
-                  transition: 'all 0.25s'
+                  transition: 'all 0.25s',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '300px'
                 }}
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.08)'; e.currentTarget.style.borderColor = emerald; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
@@ -352,7 +373,8 @@ const Telehealth = () => {
                     background: doctor.nextAvailable === 'Now' ? emeraldLight : '#fffbeb',
                     padding: '8px 20px',
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    borderBottom: `1px solid ${doctor.nextAvailable === 'Now' ? '#a7f3d0' : '#fef3c7'}`
+                    borderBottom: `1px solid ${doctor.nextAvailable === 'Now' ? '#a7f3d0' : '#fef3c7'}`,
+                    flexShrink: 0
                   }}>
                     <div style={{
                       width: '8px', height: '8px', borderRadius: '50%',
@@ -371,40 +393,40 @@ const Telehealth = () => {
                   </div>
 
                   {/* Doctor info */}
-                  <div style={{ padding: '20px 20px 0 20px' }}>
-                    <div style={{ display: 'flex', gap: '14px', marginBottom: '16px' }}>
-                      <div style={{ position: 'relative' }}>
+                  <div style={{ padding: '12px 16px 0 16px' }}>
+                    <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
                         <img
                           src={doctor.image}
                           alt={doctor.name}
-                          style={{ width: '72px', height: '72px', borderRadius: '16px', objectFit: 'cover', border: `3px solid ${emeraldLight}` }}
+                          style={{ width: '56px', height: '56px', borderRadius: '16px', objectFit: 'cover', border: `3px solid ${emeraldLight}` }}
                         />
                         <div style={{
                           position: 'absolute', bottom: '-4px', right: '-4px',
-                          background: '#22c55e', width: '16px', height: '16px',
+                          background: '#22c55e', width: '14px', height: '14px',
                           borderRadius: '50%', border: '2px solid white'
                         }} />
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <h3 style={{ margin: '0 0 3px 0', fontSize: '1rem', fontWeight: '800', color: '#0f172a' }}>{doctor.name}</h3>
-                        <p style={{ margin: '0 0 6px 0', fontSize: '0.82rem', color: emerald, fontWeight: '700' }}>{doctor.specialty}</p>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h3 style={{ margin: '0 0 2px 0', fontSize: '0.92rem', fontWeight: '800', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doctor.name}</h3>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '0.78rem', color: emerald, fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doctor.specialty}</p>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <FaStar style={{ color: '#f59e0b', fontSize: '0.75rem' }} />
-                          <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#1e293b' }}>{doctor.rating}</span>
-                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>• {doctor.experience} yrs exp</span>
+                          <FaStar style={{ color: '#f59e0b', fontSize: '0.7rem' }} />
+                          <span style={{ fontSize: '0.72rem', fontWeight: '700', color: '#1e293b' }}>{doctor.rating}</span>
+                          <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>• {doctor.experience} yrs exp</span>
                         </div>
                       </div>
                       {/* Favorite/bookmark icons */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: 0 }}>
                         <button
-                          onClick={() => toggleFavorite(doctor.id, { name: doctor.name, type: 'doctor', specialty: doctor.specialty })}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: isFav ? '#ef4444' : '#cbd5e1', padding: '4px', transition: 'color 0.2s' }}
+                          onClick={(e) => { e.stopPropagation(); toggleFavorite(doctor.id, { name: doctor.name, type: 'doctor', specialty: doctor.specialty }); }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: isFav ? '#ef4444' : '#cbd5e1', padding: '2px', transition: 'color 0.2s' }}
                         >
                           {isFav ? <FaHeart /> : <FaRegHeart />}
                         </button>
                         <button
-                          onClick={() => toggleBookmark(doctor.id, { name: doctor.name, type: 'doctor', specialty: doctor.specialty })}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: isBook ? '#f59e0b' : '#cbd5e1', padding: '4px', transition: 'color 0.2s' }}
+                          onClick={(e) => { e.stopPropagation(); toggleBookmark(doctor.id, { name: doctor.name, type: 'doctor', specialty: doctor.specialty }); }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: isBook ? '#f59e0b' : '#cbd5e1', padding: '2px', transition: 'color 0.2s' }}
                         >
                           {isBook ? <FaBookmark /> : <FaRegBookmark />}
                         </button>
@@ -412,30 +434,30 @@ const Telehealth = () => {
                     </div>
 
                     {/* Stats row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
-                      <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '10px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
-                        <div style={{ fontSize: '0.62rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Session Fee</div>
-                        <div style={{ fontSize: '0.9rem', fontWeight: '800', color: '#1e293b', marginTop: '2px' }}>{doctor.fee}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', marginBottom: '10px' }}>
+                      <div style={{ background: '#f8fafc', padding: '6px', borderRadius: '10px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
+                        <div style={{ fontSize: '0.58rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Session Fee</div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#1e293b', marginTop: '2px' }}>{doctor.fee}</div>
                       </div>
-                      <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '10px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
-                        <div style={{ fontSize: '0.62rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Wait Time</div>
-                        <div style={{ fontSize: '0.9rem', fontWeight: '800', color: emerald, marginTop: '2px' }}>{doctor.waitTime}</div>
+                      <div style={{ background: '#f8fafc', padding: '6px', borderRadius: '10px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
+                        <div style={{ fontSize: '0.58rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Wait Time</div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: '800', color: emerald, marginTop: '2px' }}>{doctor.waitTime}</div>
                       </div>
-                      <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '10px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
-                        <div style={{ fontSize: '0.62rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Languages</div>
-                        <div style={{ fontSize: '0.72rem', fontWeight: '700', color: '#475569', marginTop: '2px' }}>{doctor.languages[0]}{doctor.languages.length > 1 ? ` +${doctor.languages.length - 1}` : ''}</div>
+                      <div style={{ background: '#f8fafc', padding: '6px', borderRadius: '10px', textAlign: 'center', border: '1px solid #f1f5f9' }}>
+                        <div style={{ fontSize: '0.58rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Languages</div>
+                        <div style={{ fontSize: '0.68rem', fontWeight: '700', color: '#475569', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doctor.languages[0]}{doctor.languages.length > 1 ? ` +${doctor.languages.length - 1}` : ''}</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Action footer */}
-                  <div style={{ padding: '0 20px 20px 20px', display: 'flex', gap: '10px' }}>
+                  <div style={{ padding: '0 16px 16px 16px', display: 'flex', gap: '10px', marginTop: 'auto', flexShrink: 0 }}>
                     <button
                       onClick={() => navigate(`/doctors/${doctor.id}`)}
                       style={{
-                        flex: 1, padding: '11px', background: '#f8fafc',
+                        flex: 1, padding: '9px', background: '#f8fafc',
                         border: '1px solid #e2e8f0', borderRadius: '12px',
-                        color: '#475569', fontWeight: '700', fontSize: '0.82rem',
+                        color: '#475569', fontWeight: '700', fontSize: '0.78rem',
                         cursor: 'pointer', transition: 'all 0.2s'
                       }}
                       onMouseEnter={e => { e.currentTarget.style.borderColor = emerald; e.currentTarget.style.color = emerald; }}
@@ -447,24 +469,24 @@ const Telehealth = () => {
                       onClick={() => handleStartConsultation(doctor)}
                       disabled={isStarting}
                       style={{
-                        flex: 2, padding: '11px',
+                        flex: 2, padding: '9px',
                         background: isStarting ? '#a7f3d0' : emerald,
                         border: 'none', borderRadius: '12px',
-                        color: 'white', fontWeight: '700', fontSize: '0.85rem',
+                        color: 'white', fontWeight: '700', fontSize: '0.8rem',
                         cursor: isStarting ? 'default' : 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                         boxShadow: isStarting ? 'none' : '0 4px 12px rgba(5,150,105,0.25)',
                         transition: 'all 0.2s'
                       }}
                     >
                       {isStarting ? (
                         <>
-                          <span style={{ width: '14px', height: '14px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+                          <span style={{ width: '12px', height: '12px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
                           Connecting...
                         </>
                       ) : (
                         <>
-                          <FaVideo style={{ fontSize: '0.85rem' }} />
+                          <FaVideo style={{ fontSize: '0.75rem' }} />
                           Start Video Call
                         </>
                       )}
@@ -474,6 +496,53 @@ const Telehealth = () => {
               );
             })}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '6px',
+              flexWrap: 'wrap',
+              marginBottom: '40px'
+            }}>
+              <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} style={{
+                padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0',
+                background: 'transparent', cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                color: currentPage === 1 ? '#94a3b8' : '#1e293b', opacity: currentPage === 1 ? 0.5 : 1
+              }}>
+                <FaArrowLeft />
+              </button>
+
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) pageNum = i + 1;
+                else if (currentPage <= 3) pageNum = i + 1;
+                else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                else pageNum = currentPage - 2 + i;
+                return (
+                  <button key={pageNum} onClick={() => goToPage(pageNum)} style={{
+                    padding: '8px 14px', borderRadius: '8px',
+                    border: currentPage === pageNum ? `2px solid ${emerald}` : '1px solid #e2e8f0',
+                    background: currentPage === pageNum ? emerald : 'transparent',
+                    color: currentPage === pageNum ? 'white' : '#1e293b',
+                    cursor: 'pointer', fontWeight: currentPage === pageNum ? '700' : '500'
+                  }}>
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} style={{
+                padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0',
+                background: 'transparent', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                color: currentPage === totalPages ? '#94a3b8' : '#1e293b', opacity: currentPage === totalPages ? 0.5 : 1
+              }}>
+                <FaArrowRight />
+              </button>
+            </div>
+          )}
 
           {/* Info section */}
           <div style={{

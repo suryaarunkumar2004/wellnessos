@@ -583,19 +583,46 @@ const Navbar = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid #f1f5f9' }}>
           {user ? (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 4px' }}>
-                <FaUserCircle style={{ fontSize: '2.2rem', color: emerald }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 4px', marginBottom: '4px' }}>
+                <FaUserCircle style={{ fontSize: '2.2rem', color: emerald, flexShrink: 0 }} />
                 <div>
                   <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.85rem' }}>{user.name}</div>
                   <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{user.email}</div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
-                <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: '#334155', textDecoration: 'none', fontSize: '0.75rem', fontWeight: '600', justifyContent: 'center' }}>
-                  <FaUser /> Profile
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', borderRadius: '8px', background: '#f8fafc', color: '#1f2937', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '500', border: '1px solid #f1f5f9' }}>
+                  <FaUser style={{ color: emerald, fontSize: '0.95rem' }} /> <span>Profile</span>
                 </Link>
-                <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px', borderRadius: '8px', background: '#fef2f2', color: '#ef4444', border: 'none', fontSize: '0.75rem', fontWeight: '600', justifyContent: 'center', cursor: 'pointer' }}>
-                  <FaSignOutAlt /> Logout
+                <Link to="/medical-history" onClick={() => setIsMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', borderRadius: '8px', background: '#f8fafc', color: '#1f2937', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '500', border: '1px solid #f1f5f9' }}>
+                  <FaHistory style={{ color: emerald, fontSize: '0.95rem' }} /> <span>Medical History</span>
+                </Link>
+                <Link to="/settings" onClick={() => setIsMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', borderRadius: '8px', background: '#f8fafc', color: '#1f2937', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '500', border: '1px solid #f1f5f9' }}>
+                  <FaCog style={{ color: emerald, fontSize: '0.95rem' }} /> <span>Settings</span>
+                </Link>
+                <Link to="/privacy" onClick={() => setIsMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', borderRadius: '8px', background: '#f8fafc', color: '#1f2937', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '500', border: '1px solid #f1f5f9' }}>
+                  <FaShieldAlt style={{ color: emerald, fontSize: '0.95rem' }} /> <span>Privacy Policy</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    color: '#ef4444',
+                    background: '#fef2f2',
+                    border: 'none',
+                    width: '100%',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontWeight: '500',
+                    fontFamily: 'inherit',
+                    textAlign: 'left'
+                  }}
+                >
+                  <FaSignOutAlt style={{ fontSize: '0.95rem' }} /> <span>Logout</span>
                 </button>
               </div>
             </>
