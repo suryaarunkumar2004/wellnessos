@@ -243,7 +243,7 @@ const DrugDetail = () => {
               )}
               <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px' }}>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase' }}>Price</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#059669', marginTop: '4px' }}>₹{priceValue}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#059669', marginTop: '4px' }}>${priceValue}</div>
               </div>
               {drug.manufacturer && (
                 <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px' }}>
@@ -329,7 +329,7 @@ const DrugDetail = () => {
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#f1f5f9'; e.currentTarget.style.boxShadow = 'none'; }}
                     >
                       <div style={{ fontWeight: '600' }}>{d.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>₹{d.price || 299}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>${d.price || 299}</div>
                     </Link>
                   ))}
               </div>

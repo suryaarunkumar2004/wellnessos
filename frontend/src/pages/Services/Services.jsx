@@ -482,7 +482,7 @@ const Services = () => {
                     <div>
                       <span style={{ fontSize: '0.55rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Price</span>
                       <div style={{ fontSize: '1.1rem', fontWeight: '700', color: emerald }}>
-                        ₹{priceValue}
+                        ${priceValue}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '6px' }}>

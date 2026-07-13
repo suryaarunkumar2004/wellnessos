@@ -174,7 +174,7 @@ const MyBookmarks = () => {
                   <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '0 0 6px 0' }}>{item.category}</p>
                   <p style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: '1.4', margin: '0 0 10px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.description}</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
-                    {item.price && <span style={{ fontWeight: '700', color: emerald }}>₹{item.price}</span>}
+                    {item.price && <span style={{ fontWeight: '700', color: emerald }}>${item.price}</span>}
                     {!item.price && <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>📖 Article</span>}
                     <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>🔖 Bookmarked</span>
                   </div>

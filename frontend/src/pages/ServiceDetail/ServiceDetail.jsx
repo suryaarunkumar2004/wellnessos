@@ -230,11 +230,11 @@ const ServiceDetail = () => {
                   </h3>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
                     <span style={{ color: '#64748b' }}>Base Price</span>
-                    <span style={{ fontWeight: '600', color: '#1e293b' }}>₹{priceValue}</span>
+                    <span style={{ fontWeight: '600', color: '#1e293b' }}>${priceValue}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
                     <span style={{ color: '#64748b' }}>Estimated Tax (10%)</span>
-                    <span style={{ fontWeight: '600', color: '#1e293b' }}>₹{(priceValue * 0.1).toFixed(0)}</span>
+                    <span style={{ fontWeight: '600', color: '#1e293b' }}>${(priceValue * 0.1).toFixed(0)}</span>
                   </div>
                   <div style={{ 
                     display: 'flex', 
@@ -246,7 +246,7 @@ const ServiceDetail = () => {
                     color: '#059669'
                   }}>
                     <span>Total</span>
-                    <span style={{ fontSize: '1.2rem' }}>₹{(priceValue * 1.1).toFixed(0)}</span>
+                    <span style={{ fontSize: '1.2rem' }}>${(priceValue * 1.1).toFixed(0)}</span>
                   </div>
                 </div>
 
@@ -453,7 +453,7 @@ const ServiceDetail = () => {
                         onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#f1f5f9'; e.currentTarget.style.boxShadow = 'none'; }}
                       >
                         <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{s.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>₹{s.price || 299} / {s.duration || '30 min'}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>${s.price || 299} / {s.duration || '30 min'}</div>
                       </Link>
                     ))}
                 </div>
