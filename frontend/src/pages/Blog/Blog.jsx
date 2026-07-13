@@ -108,6 +108,7 @@ const Blog = () => {
 
   const fetchPosts = async () => {
     setLoading(true);
+    let success = false;
     try {
       const response = await fetch('http://localhost:8080/api/blog/posts?page=0&size=100');
       if (response.ok) {
@@ -121,7 +122,14 @@ const Blog = () => {
         }));
         setPosts(enrichedPosts);
         setFilteredPosts(enrichedPosts);
-      } else {
+        success = true;
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    }
+
+    if (!success) {
+      try {
         const { blogContents } = await import('../../data/blogContents.js');
         const fallbackPosts = Object.entries(blogContents).map(([id, content]) => ({
           id: parseInt(id),
@@ -137,12 +145,11 @@ const Blog = () => {
         }));
         setPosts(fallbackPosts);
         setFilteredPosts(fallbackPosts);
+      } catch (fallbackError) {
+        console.error('Error loading fallback posts:', fallbackError);
       }
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const fetchCategories = async () => {
