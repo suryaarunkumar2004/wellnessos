@@ -155,53 +155,13 @@ const BlogDetail = () => {
     return 'Wellness';
   };
 
-  const fetchPost = async () => {
+  const fetchPost = () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/blog/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        const imageData = blogImages[parseInt(id)] || {};
-        const videoId = getVideoId(parseInt(id));
-        const authorImage = getAuthorImage(data.author);
-        
-        setPost({
-          ...data,
-          imageUrl: data.imageUrl || imageData.image || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=500&fit=crop&q=80',
-          thumbnail: data.thumbnail || imageData.thumbnail || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop',
-          videoId: data.videoId || videoId || null,
-          comments: data.comments || 0,
-          authorImage: authorImage
-        });
-      } else {
-        const localContent = blogContents[postId];
-        if (localContent) {
-          const imageData = blogImages[postId] || {};
-          const authorImage = getAuthorImage('WellNest Team');
-          setPost({
-            id: postId,
-            title: localContent.title,
-            content: localContent.content,
-            category: getCategoryFromId(postId),
-            imageUrl: imageData.image || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=500&fit=crop&q=80',
-            thumbnail: imageData.thumbnail || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop',
-            videoId: imageData.videoId || null,
-            author: 'WellNest Team',
-            authorImage: authorImage,
-            readTime: Math.floor(localContent.content?.split(' ').length / 200) + 1 || 5,
-            views: 0,
-            likes: 0,
-            comments: 0,
-            date: new Date().toISOString()
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching post:', error);
       const localContent = blogContents[postId];
       if (localContent) {
         const imageData = blogImages[postId] || {};
-        const authorImage = getAuthorImage('WellNest Team');
+        const authorImage = getAuthorImage(imageData.author || 'WellNest Team');
         setPost({
           id: postId,
           title: localContent.title,
@@ -210,15 +170,17 @@ const BlogDetail = () => {
           imageUrl: imageData.image || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=500&fit=crop&q=80',
           thumbnail: imageData.thumbnail || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop',
           videoId: imageData.videoId || null,
-          author: 'WellNest Team',
+          author: imageData.author || 'WellNest Team',
           authorImage: authorImage,
-          readTime: Math.floor(localContent.content?.split(' ').length / 200) + 1 || 5,
-          views: 0,
-          likes: 0,
-          comments: 0,
+          readTime: Math.floor((localContent.content || '').split(' ').length / 200) + 1 || 5,
+          views: 120,
+          likes: 45,
+          comments: comments.length,
           date: new Date().toISOString()
         });
       }
+    } catch (error) {
+      console.error('Error loading post:', error);
     } finally {
       setLoading(false);
     }

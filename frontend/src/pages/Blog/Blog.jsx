@@ -15,6 +15,7 @@ import CustomDropdown from '../../components/CustomDropdown';
 import { useFavorites } from '../../contexts/FavoritesContext';
 import { useBookmarks } from '../../contexts/BookmarksContext';
 import blogImages from '../../data/blogImages.js';
+import { blogContents } from '../../data/blogContents.js';
 
 const Blog = () => {
   const navigate = useNavigate();
@@ -106,62 +107,52 @@ const Blog = () => {
     navigate(`/blog/${postId}#comments`);
   };
 
-  const fetchPosts = async () => {
-    setLoading(true);
-    let success = false;
-    try {
-      const response = await fetch('http://localhost:8080/api/blog/posts?page=0&size=100');
-      if (response.ok) {
-        const data = await response.json();
-        const postsData = data.content || data || [];
-        const enrichedPosts = postsData.map(post => ({
-          ...post,
-          imageUrl: getPostImage(post.id),
-          thumbnail: getPostThumbnail(post.id),
-          videoId: getVideoId(post.id)
-        }));
-        setPosts(enrichedPosts);
-        setFilteredPosts(enrichedPosts);
-        success = true;
-      }
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-    }
-
-    if (!success) {
-      try {
-        const { blogContents } = await import('../../data/blogContents.js');
-        const fallbackPosts = Object.entries(blogContents).map(([id, content]) => ({
-          id: parseInt(id),
-          title: content.title,
-          content: content.content,
-          imageUrl: getPostImage(parseInt(id)),
-          thumbnail: getPostThumbnail(parseInt(id)),
-          videoId: getVideoId(parseInt(id)),
-          category: 'Wellness',
-          author: 'WellNest Team',
-          readTime: Math.floor(content.content?.split(' ').length / 200) + 1 || 5,
-          date: new Date().toISOString()
-        }));
-        setPosts(fallbackPosts);
-        setFilteredPosts(fallbackPosts);
-      } catch (fallbackError) {
-        console.error('Error loading fallback posts:', fallbackError);
-      }
-    }
-    setLoading(false);
+  const getCategoryFromId = (id) => {
+    if (id >= 1 && id <= 8) return 'Cardiology';
+    if (id >= 9 && id <= 16) return 'Nutrition & Dietetics';
+    if (id >= 17 && id <= 24) return 'Physical Therapy';
+    if (id >= 25 && id <= 32) return 'General Medicine';
+    if (id >= 33 && id <= 40) return 'Pediatrics';
+    if (id >= 41 && id <= 46) return 'Mental Health';
+    if (id >= 47 && id <= 54) return 'Women & Men Health';
+    return 'Wellness';
   };
 
-  const fetchCategories = async () => {
+  const fetchPosts = () => {
+    setLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/api/blog/categories');
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(['All', ...data]);
-      }
+      const localPosts = Object.entries(blogContents).map(([id, content]) => {
+        const postId = parseInt(id);
+        const imageInfo = blogImages[postId] || {};
+        return {
+          id: postId,
+          title: content.title,
+          content: content.content,
+          imageUrl: imageInfo.image || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=500&fit=crop&q=80',
+          thumbnail: imageInfo.thumbnail || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop',
+          videoId: imageInfo.videoId || null,
+          category: getCategoryFromId(postId),
+          author: imageInfo.author || 'WellNest Team',
+          authorImage: imageInfo.authorImage || 'https://randomuser.me/api/portraits/women/1.jpg',
+          readTime: Math.floor((content.content || '').split(' ').length / 200) + 1 || 5,
+          date: new Date().toISOString()
+        };
+      });
+      setPosts(localPosts);
+      setFilteredPosts(localPosts);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('Error loading posts:', error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const fetchCategories = () => {
+    const cats = new Set();
+    Object.keys(blogContents).forEach(id => {
+      cats.add(getCategoryFromId(parseInt(id)));
+    });
+    setCategories(['All', ...Array.from(cats)]);
   };
 
   useEffect(() => {
