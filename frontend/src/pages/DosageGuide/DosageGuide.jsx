@@ -101,6 +101,99 @@ const DosageGuide = () => {
     }
   };
 
+  const getDetailedPrescriptionInfo = (drug) => {
+    if (drug.prescriptionDetail) return drug.prescriptionDetail;
+
+    const name = (drug.name || '').toLowerCase();
+    const cat = (drug.category || '').toLowerCase();
+
+    // Controlled Opioids & Central Analgesics
+    if (name.includes('morphine') || name.includes('fentanyl') || name.includes('oxycodone') || name.includes('hydromorphone') || name.includes('tapentadol')) {
+      return 'Rx Required • Schedule II Controlled Opioid (Strict Oversight)';
+    }
+    if (name.includes('tramadol') || name.includes('codeine') || name.includes('alprazolam') || name.includes('clonazepam') || name.includes('lorazepam')) {
+      return 'Rx Required • Schedule IV/V Controlled Neuropathic & Sedative Agent';
+    }
+    if (name.includes('gabapentin') || name.includes('pregabalin')) {
+      return 'Rx Required • Schedule V Anticonvulsant & GABAergic Modulator';
+    }
+
+    // Antibiotics & Anti-Infectives
+    if (cat.includes('antibiotic')) {
+      if (name.includes('amoxicillin') || name.includes('penicillin') || name.includes('ampicillin')) {
+        return 'Rx Required • Aminopenicillin Antimicrobial Therapy';
+      }
+      if (name.includes('azithromycin') || name.includes('clarithromycin') || name.includes('erythromycin')) {
+        return 'Rx Required • Targeted Macrolide Antibacterial Course';
+      }
+      if (name.includes('ciprofloxacin') || name.includes('levofloxacin') || name.includes('moxifloxacin')) {
+        return 'Rx Required • Second/Third Gen Fluoroquinolone Anti-Infective';
+      }
+      if (name.includes('vancomycin') || name.includes('meropenem') || name.includes('linezolid') || name.includes('daptomycin')) {
+        return 'Rx Required • High-Potency Reserve Hospital Infusion Antibiotic';
+      }
+      return 'Rx Required • Systemic Broad-Spectrum Antibacterial Agent';
+    }
+
+    // Cardiovascular & Anticoagulants
+    if (cat.includes('cardio')) {
+      if (name.includes('apixaban') || name.includes('rivaroxaban') || name.includes('dabigatran') || name.includes('warfarin')) {
+        return 'Rx Required • Anticoagulant Blood Thinner (INR Tracked)';
+      }
+      if (name.includes('atorvastatin') || name.includes('ezetimibe') || name.includes('simvastatin') || name.includes('rosuvastatin')) {
+        return 'Rx Required • Lipid-Lowering Statin & HMG-CoA Reductase Inhibitor';
+      }
+      if (name.includes('amlodipine') || name.includes('losartan') || name.includes('propranolol') || name.includes('lisinopril')) {
+        return 'Rx Required • Cardiovascular Vasodilator & BP Modulator';
+      }
+      return 'Rx Required • Cardiac Hemodynamic & Hypertensive Control';
+    }
+
+    // Diabetes & Hormones
+    if (cat.includes('diabet') || cat.includes('hormone')) {
+      if (name.includes('insulin') || name.includes('glargine') || name.includes('lispro')) {
+        return 'Rx Required • Recombinant Subcutaneous Human Insulin Therapy';
+      }
+      if (name.includes('metformin')) {
+        return 'Rx Required • Biguanide Insulin Sensitizer & Antidiabetic';
+      }
+      return 'Rx Required • Endocrine Glucose & Metabolic Regulator';
+    }
+
+    // Respiratory & Allergy
+    if (cat.includes('resp') || cat.includes('asthma')) {
+      if (name.includes('salbutamol') || name.includes('budesonide') || name.includes('tiotropium')) {
+        return 'Rx Required • Inhaled Bronchodilator & Airway Anti-Inflammatory';
+      }
+      return 'Rx Required • Pulmonary Airway Resistance Modulator';
+    }
+
+    // Pain Relief & NSAIDs
+    if (cat.includes('pain')) {
+      if (name.includes('paracetamol') || name.includes('aspirin')) {
+        return 'OTC Approved • Non-Narcotic Antipyretic & Pain Relief';
+      }
+      if (name.includes('ibuprofen') || name.includes('naproxen')) {
+        return 'OTC / Rx • Propionic Anti-Inflammatory & Analgesic Compound';
+      }
+      if (name.includes('celecoxib') || name.includes('ketorolac') || name.includes('diclofenac')) {
+        return 'Rx Required • Targeted Selective Systemic NSAID';
+      }
+    }
+
+    // Psychiatric & CNS
+    if (cat.includes('psych') || cat.includes('nervous')) {
+      return 'Rx Required • Central Nervous System Neuromodulator Agent';
+    }
+
+    // Gastrointestinal
+    if (cat.includes('gastro') || cat.includes('ulcer')) {
+      return 'Rx / OTC • Gastric Acid Proton Pump Shield & Suppressor';
+    }
+
+    return `Rx Required • ${drug.category || 'Clinical'} Certified Prescription Medication`;
+  };
+
   const renderStars = (rating) => {
     const fullStars = Math.floor(rating || 4.5);
     const emptyStars = 5 - fullStars;
@@ -284,9 +377,10 @@ const DosageGuide = () => {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 360px))',
             gap: '20px',
-            marginBottom: '40px'
+            marginBottom: '40px',
+            justifyContent: 'center'
           }}>
             {currentDrugs.map((drug) => {
               const isFav = isFavorite(drug.id);
@@ -301,16 +395,14 @@ const DosageGuide = () => {
                     background: 'white',
                     borderRadius: '16px',
                     padding: '16px',
-                    paddingTop: '36px',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
                     border: '1px solid #e2e8f0',
                     transition: 'all 0.3s ease',
                     cursor: 'pointer',
-                    position: 'relative',
-                    overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    height: '290px'
+                    justifyContent: 'space-between',
+                    height: '240px'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';
@@ -324,44 +416,18 @@ const DosageGuide = () => {
                   }}
                   onClick={() => navigate(`/dosage-guide/${drug.id}`)}
                 >
-                  <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    background: color,
-                    color: 'white',
-                    padding: '3px 12px',
-                    borderRadius: '12px',
-                    fontSize: '0.6rem',
-                    fontWeight: '600',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    zIndex: 5,
-                    maxWidth: '60%'
-                  }}>
-                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {drug.category || 'General'}
-                    </span>
-                  </div>
-
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    marginBottom: '10px',
-                    marginTop: '4px'
-                  }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
-                      width: '44px',
-                      height: '44px',
-                      borderRadius: '12px',
+                      width: '52px',
+                      height: '52px',
+                      borderRadius: '50%',
                       background: `${color}15`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '1.5rem',
+                      fontSize: '1.6rem',
                       color: color,
+                      border: `2px solid ${color}10`,
                       flexShrink: 0
                     }}>
                       💊
@@ -375,60 +441,58 @@ const DosageGuide = () => {
                         lineHeight: '1.2',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical'
+                        whiteSpace: 'nowrap'
                       }}>
                         {drug.name}
                       </h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                      <p style={{ fontSize: '0.75rem', color: emerald, fontWeight: '600', margin: '2px 0 2px 0' }}>
+                        {drug.category || 'General'}
+                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {renderStars(drug.rating || 4.5)}
-                        <span style={{ fontSize: '0.6rem', color: '#94a3b8' }}>({drug.rating || 4.5})</span>
+                        <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>({drug.rating || 4.5})</span>
                       </div>
                     </div>
                   </div>
 
-                  {drug.dosage && (
+                  <div style={{ margin: '8px 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {drug.dosage && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FaClock style={{ color: emerald, fontSize: '0.65rem' }} />
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {drug.dosage}
+                        </span>
+                      </div>
+                    )}
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px',
-                      marginBottom: '6px',
-                      flexShrink: 0
+                      gap: '5px',
+                      background: '#ecfdf5',
+                      border: '1px solid #a7f3d0',
+                      borderRadius: '6px',
+                      padding: '4px 8px',
+                      marginTop: '4px'
                     }}>
-                      <FaClock style={{ color: emerald, fontSize: '0.6rem' }} />
-                      <span style={{ fontSize: '0.7rem', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {drug.dosage}
+                      <FaPrescription style={{ color: emerald, fontSize: '0.75rem', flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.66rem', color: '#047857', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {getDetailedPrescriptionInfo(drug)}
                       </span>
                     </div>
-                  )}
-
-                  <p style={{
-                    fontSize: '0.78rem',
-                    color: '#64748b',
-                    lineHeight: '1.5',
-                    margin: '0 0 12px 0',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    flexShrink: 0
-                  }}>
-                    {drug.description || 'Prescription medication'}
-                  </p>
+                  </div>
 
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     borderTop: '1px solid #f1f5f9',
-                    paddingTop: '12px',
+                    paddingTop: '10px',
                     marginTop: 'auto',
                     flexShrink: 0
                   }}>
                     <div>
                       <span style={{ fontSize: '0.55rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Price</span>
-                      <div style={{ fontSize: '1.1rem', fontWeight: '700', color: emerald }}>
+                      <div style={{ fontSize: '1.05rem', fontWeight: '800', color: emerald }}>
                         ${drug.price || 299}
                       </div>
                     </div>

@@ -39,6 +39,37 @@ input, textarea, select, button, div, span, p, h1, h2, h3, h4, h5, h6, a, li {
   font-family: var(--font-family) !important;
 }
 
+:root {
+  accent-color: #059669 !important;
+}
+
+input, select, textarea, button {
+  accent-color: #059669 !important;
+}
+
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"] {
+  accent-color: #059669 !important;
+}
+
+::selection {
+  background: #059669 !important;
+  color: #ffffff !important;
+}
+
+::-moz-selection {
+  background: #059669 !important;
+  color: #ffffff !important;
+}
+
+.border-none-focus:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 /* Prevent scrollbar flash */
 ::-webkit-scrollbar {
   width: 8px;

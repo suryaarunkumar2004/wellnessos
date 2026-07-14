@@ -17,7 +17,10 @@ export const CartProvider = ({ children }) => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       try {
-        setCartItems(JSON.parse(savedCart));
+        const parsed = JSON.parse(savedCart);
+        if (Array.isArray(parsed)) {
+          setCartItems(parsed.filter(i => i && i.id !== undefined && i.id !== null));
+        }
       } catch (e) {
         console.error('Error parsing cart data:', e);
       }

@@ -1,118 +1,78 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHeart, FaArrowLeft, FaTrash } from 'react-icons/fa';
 import Navbar from '../../components/Navbar/Navbar';
 import Footer from '../../components/Footer/Footer';
 import { servicesData } from '../../data/servicesData';
 import { drugDatabase } from '../../services/drugDatabase';
+import { useFavorites } from '../../contexts/FavoritesContext';
 
 const Favorites = () => {
   const navigate = useNavigate();
   const emerald = '#059669';
-  const [allFavorites, setAllFavorites] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { favorites, toggleFavorite, loading } = useFavorites();
 
-  const loadFavorites = () => {
-    setLoading(true);
-    const items = [];
+  const validFavs = Array.isArray(favorites) ? favorites.filter(f => f && (f.id !== undefined && f.id !== null)) : [];
 
-    // Read DIRECTLY from localStorage - NO CONTEXT
-    let stored = [];
-    try {
-      const raw = localStorage.getItem('globalFavorites');
-      if (raw) {
-        stored = JSON.parse(raw);
-        console.log('✅ Favorites loaded:', stored.length, 'items');
-      } else {
-        console.log('⚠️ No favorites found in localStorage');
-      }
-    } catch (e) {
-      console.error('Error loading favorites:', e);
-    }
-
-    // Services
-    stored.filter(f => f.type === 'service').forEach(f => {
-      const s = servicesData.find(s => s.id === f.id);
-      if (s) {
-        items.push({
-          id: `service-${s.id}`,
-          originalId: s.id,
-          name: s.name,
-          category: s.category,
-          price: s.price,
-          type: 'Service',
-          icon: '��',
-          description: s.description || 'Premium healthcare service',
-          source: 'Services',
-          path: `/services/${s.id}`
-        });
-      }
-    });
-
-    // Drugs
-    stored.filter(f => f.type === 'drug').forEach(f => {
+  const items = validFavs.map(f => {
+    if (f.type === 'drug') {
       const d = drugDatabase.find(d => d.id === f.id);
-      if (d) {
-        items.push({
-          id: `drug-${d.id}`,
-          originalId: d.id,
-          name: d.name,
-          category: d.category,
-          price: d.price,
-          type: 'Drug',
-          icon: '💊',
-          description: d.description || 'Prescription medication',
-          source: 'Dosage Guide',
-          path: `/dosage-guide/${d.id}`
-        });
-      }
-    });
-
-    // Blogs
-    stored.filter(f => f.type === 'blog').forEach(f => {
-      items.push({
+      return {
+        id: `drug-${f.id}`,
+        originalId: f.id,
+        name: d?.name || f.name || `Medication #${f.id}`,
+        category: d?.category || f.category || 'Medication',
+        price: d?.price || f.price || 49,
+        type: 'Drug',
+        icon: '💊',
+        description: d?.description || f.description || 'Prescription medication',
+        source: 'Dosage Guide',
+        path: `/dosage-guide/${f.id}`
+      };
+    } else if (f.type === 'blog') {
+      return {
         id: `blog-${f.id}`,
         originalId: f.id,
-        name: f.title || `Blog Post ${f.id}`,
-        category: f.category || 'Blog',
+        name: f.name || f.title || `Blog Post #${f.id}`,
+        category: f.category || 'Health Article',
         type: 'Blog',
         icon: '📝',
-        description: 'Health article',
+        description: f.description || 'Health article & insights',
         source: 'Blog',
         path: `/blog/${f.id}`
-      });
-    });
-
-    setAllFavorites(items);
-    setLoading(false);
-  };
-
-  // Remove from localStorage directly
-  const removeFavorite = (id) => {
-    try {
-      const raw = localStorage.getItem('globalFavorites');
-      if (raw) {
-        let stored = JSON.parse(raw);
-        stored = stored.filter(f => f.id !== id);
-        localStorage.setItem('globalFavorites', JSON.stringify(stored));
-        loadFavorites(); // Reload the list
-      }
-    } catch (e) {
-      console.error('Error removing favorite:', e);
+      };
+    } else if (f.type === 'doctor') {
+      return {
+        id: `doctor-${f.id}`,
+        originalId: f.id,
+        name: f.name || f.doctor || `Dr. Consultant #${f.id}`,
+        category: f.specialty || f.category || 'Medical Specialist',
+        type: 'Doctor',
+        icon: '👨‍⚕️',
+        description: f.bio || 'Board-certified medical specialist',
+        source: 'Telehealth',
+        path: `/doctors`
+      };
+    } else {
+      const s = servicesData.find(s => s.id === f.id);
+      return {
+        id: `service-${f.id}`,
+        originalId: f.id,
+        name: s?.name || f.name || f.title || `Service #${f.id}`,
+        category: s?.category || f.category || 'General Service',
+        price: s?.price || f.price || 199,
+        type: 'Service',
+        icon: '🩺',
+        description: s?.description || f.description || 'Premium healthcare service',
+        source: 'Services',
+        path: `/services/${f.id}`
+      };
     }
-  };
+  });
 
-  useEffect(() => {
-    loadFavorites();
-    // Reload when localStorage changes (if another tab updates)
-    const handleStorage = (e) => {
-      if (e.key === 'globalFavorites') {
-        loadFavorites();
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
+  const handleRemove = (originalId) => {
+    toggleFavorite(originalId);
+  };
 
   if (loading) {
     return (
@@ -144,11 +104,11 @@ const Favorites = () => {
             </div>
             <div>
               <h1 style={{ fontSize: '2rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>Your Favorites</h1>
-              <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>{allFavorites.length} items saved</p>
+              <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>{items.length} items saved</p>
             </div>
           </div>
 
-          {allFavorites.length === 0 ? (
+          {items.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', background: 'white', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
               <FaHeart style={{ fontSize: '4rem', color: '#e2e8f0', marginBottom: '16px' }} />
               <h3 style={{ fontSize: '1.3rem', color: '#1e293b', marginBottom: '8px' }}>No Favorites Yet</h3>
@@ -161,7 +121,7 @@ const Favorites = () => {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-              {allFavorites.map(item => (
+              {items.map(item => (
                 <div key={item.id} onClick={() => navigate(item.path)} style={{ background: 'white', borderRadius: '16px', padding: '16px 18px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.3s ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.08)'; e.currentTarget.style.borderColor = emerald; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = '#e2e8f0'; }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -169,7 +129,7 @@ const Favorites = () => {
                       <span style={{ background: '#ecfdf5', color: emerald, padding: '2px 10px', borderRadius: '12px', fontSize: '0.6rem', fontWeight: '600' }}>{item.type}</span>
                       <span style={{ background: '#f1f5f9', color: '#64748b', padding: '2px 8px', borderRadius: '12px', fontSize: '0.55rem', fontWeight: '500' }}>{item.source}</span>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); removeFavorite(item.originalId); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '4px' }}><FaTrash /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleRemove(item.originalId); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '4px' }}><FaTrash /></button>
                   </div>
                   <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: '#1e293b', margin: '6px 0 2px 0' }}>{item.name}</h3>
                   <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '0 0 6px 0' }}>{item.category}</p>

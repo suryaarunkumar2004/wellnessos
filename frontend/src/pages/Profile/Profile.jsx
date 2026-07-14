@@ -668,13 +668,29 @@ export default function Profile() {
                       </div>
                     </div>
 
-                    <div className="emergency-id-right">
-                      <div style={{ background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                        <QrCode size={64} color="#0f172a" />
+                    <div className="emergency-id-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '120px' }}>
+                      <div style={{
+                        background: 'white',
+                        padding: '8px',
+                        borderRadius: '16px',
+                        border: '2px solid #a7f3d0',
+                        boxShadow: '0 4px 14px rgba(5,150,105,0.12)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100px',
+                        height: '100px',
+                        boxSizing: 'border-box'
+                      }}>
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`WELLNESS-OS EMERGENCY PASSPORT\nName: ${name || 'User'}\nBlood Type: ${medicalPassport.bloodType || 'N/A'}\nAllergies: ${medicalPassport.allergies || 'None'}\nContact: ${medicalPassport.emergencyName || 'N/A'} ${medicalPassport.emergencyPhone || ''}`)}&color=0f172a&bgcolor=ffffff`}
+                          alt="Emergency Medical Scannable QR Code"
+                          style={{ width: '84px', height: '84px', borderRadius: '6px', objectFit: 'contain' }}
+                        />
                       </div>
-                      <span style={{ fontSize: '0.55rem', color: '#475569', marginTop: '6px', fontWeight: '700', letterSpacing: '0.5px' }}>SCAN IN EMERGENCY</span>
+                      <span style={{ fontSize: '0.58rem', color: '#475569', marginTop: '8px', fontWeight: '800', letterSpacing: '0.5px' }}>SCAN IN EMERGENCY</span>
                       {medicalPassport.organDonor && (
-                        <span style={{ fontSize: '0.55rem', color: '#059669', marginTop: '4px', fontWeight: '700' }}>❤️ Organ Donor</span>
+                        <span style={{ fontSize: '0.58rem', color: '#059669', marginTop: '3px', fontWeight: '800' }}>❤️ Organ Donor</span>
                       )}
                     </div>
                   </div>

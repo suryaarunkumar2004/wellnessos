@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import Footer from '../../components/Footer/Footer';
 import { FaArrowLeft, FaHeartbeat, FaHistory, FaDownload, FaPrint, FaShare, FaTrash } from 'react-icons/fa';
+import EmeraldDatePicker from '../../components/EmeraldDatePicker';
 
 export default function BloodPressureLog() {
   const [systolic, setSystolic] = useState('');
@@ -111,9 +112,8 @@ export default function BloodPressureLog() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
             <div style={{ background: 'white', borderRadius: '20px', padding: '32px', border: '1px solid #e2e8f0' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#1e293b', marginBottom: '20px' }}>Log Your Reading</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '1rem', outline: 'none' }} />
+                <EmeraldDatePicker value={date} onChange={setDate} />
                 <input type="number" value={systolic} onChange={e => setSystolic(e.target.value)} placeholder="Systolic (mmHg) *" style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '1rem', outline: 'none' }} />
                 <input type="number" value={diastolic} onChange={e => setDiastolic(e.target.value)} placeholder="Diastolic (mmHg) *" style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '1rem', outline: 'none' }} />
                 <div style={{ display: 'flex', gap: '12px' }}>

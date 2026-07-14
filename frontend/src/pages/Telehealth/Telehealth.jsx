@@ -10,6 +10,7 @@ import {
 import Navbar from '../../components/Navbar/Navbar';
 import Footer from '../../components/Footer/Footer';
 import CustomDropdown from '../../components/CustomDropdown';
+import EmeraldDatePicker from '../../components/EmeraldDatePicker';
 import { useToast } from '../../contexts/ToastContext';
 import { useFavorites } from '../../contexts/FavoritesContext';
 import { useBookmarks } from '../../contexts/BookmarksContext';
@@ -93,7 +94,88 @@ const Telehealth = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
   const [startingSession, setStartingSession] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const doctorsPerPage = 8;
+  const doctorsPerPage = 12;
+
+  const [upcomingSessions, setUpcomingSessions] = useState([
+    {
+      id: 1,
+      doctor: 'Dr. Emily Carter',
+      specialty: 'Cardiology',
+      image: 'https://randomuser.me/api/portraits/women/1.jpg',
+      date: 'Today, July 8',
+      time: '4:30 PM',
+      duration: '30 min',
+      status: 'Starting Soon',
+      statusColor: '#059669',
+      statusBg: '#ecfdf5'
+    },
+    {
+      id: 17,
+      doctor: 'Dr. Michael Chen',
+      specialty: 'Neurology',
+      image: 'https://randomuser.me/api/portraits/men/34.jpg',
+      date: 'Thu, July 10',
+      time: '11:00 AM',
+      duration: '45 min',
+      status: 'Confirmed',
+      statusColor: '#3b82f6',
+      statusBg: '#eff6ff'
+    }
+  ]);
+
+  const [rescheduleSession, setRescheduleSession] = useState(null);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleTime, setRescheduleTime] = useState('');
+  const [rescheduleReason, setRescheduleReason] = useState('');
+
+  const handleConfirmReschedule = async () => {
+    if (!rescheduleSession || !rescheduleDate || !rescheduleTime) {
+      if (showToast) showToast('Please select both a date and a time slot', 'error');
+      return;
+    }
+
+    let dateFormatted = rescheduleDate;
+    try {
+      const parts = rescheduleDate.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        dateFormatted = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      }
+    } catch (e) {
+      console.warn('Date parsing fallback:', e);
+    }
+
+    setUpcomingSessions(prev => prev.map(s => {
+      if (s.id === rescheduleSession.id) {
+        return {
+          ...s,
+          date: dateFormatted,
+          time: rescheduleTime,
+          status: 'Rescheduled',
+          statusColor: '#059669',
+          statusBg: '#ecfdf5'
+        };
+      }
+      return s;
+    }));
+
+    try {
+      await fetch(`/api/appointments/${rescheduleSession.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appointmentDate: rescheduleDate,
+          appointmentTime: rescheduleTime,
+          notes: rescheduleReason || 'Rescheduled via Telehealth portal'
+        })
+      });
+    } catch (e) {
+      console.warn('Backend update failed:', e);
+    }
+
+    if (showToast) showToast(`✅ Session with ${rescheduleSession.doctor} rescheduled to ${dateFormatted} at ${rescheduleTime}`, 'success');
+    setRescheduleSession(null);
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -239,23 +321,12 @@ const Telehealth = () => {
           <div style={{ marginBottom: '40px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: '#1e293b', margin: 0 }}>Your Scheduled Sessions</h2>
-              <span style={{ fontSize: '0.75rem', background: '#ecfdf5', color: '#059669', padding: '4px 12px', borderRadius: '20px', fontWeight: '700', border: '1px solid #a7f3d0' }}>2 Upcoming</span>
+              <span style={{ fontSize: '0.75rem', background: '#ecfdf5', color: '#059669', padding: '4px 12px', borderRadius: '20px', fontWeight: '700', border: '1px solid #a7f3d0' }}>
+                {upcomingSessions.length} Upcoming
+              </span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-              {[
-                {
-                  id: 1,
-                  doctor: 'Dr. Emily Carter', specialty: 'Cardiology', image: 'https://randomuser.me/api/portraits/women/1.jpg',
-                  date: 'Today, July 8', time: '4:30 PM', duration: '30 min',
-                  status: 'Starting Soon', statusColor: '#059669', statusBg: '#ecfdf5'
-                },
-                {
-                  id: 17,
-                  doctor: 'Dr. Michael Chen', specialty: 'Neurology', image: 'https://randomuser.me/api/portraits/men/34.jpg',
-                  date: 'Thu, July 10', time: '11:00 AM', duration: '45 min',
-                  status: 'Confirmed', statusColor: '#3b82f6', statusBg: '#eff6ff'
-                }
-              ].map((session, i) => (
+              {upcomingSessions.map((session, i) => (
                 <div key={i} style={{
                   background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0',
                   boxShadow: '0 4px 16px rgba(0,0,0,0.04)', overflow: 'hidden'
@@ -291,7 +362,12 @@ const Telehealth = () => {
                       <FaVideo /> Join Session
                     </button>
                     <button
-                      onClick={() => showToast('Reschedule flow opening...', 'info')}
+                      onClick={() => {
+                        setRescheduleSession(session);
+                        setRescheduleDate(new Date().toISOString().split('T')[0]);
+                        setRescheduleTime('10:30 AM');
+                        setRescheduleReason('');
+                      }}
                       style={{ flex: 1, padding: '9px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', color: '#475569', fontWeight: '700', fontSize: '0.78rem', cursor: 'pointer' }}
                     >
                       Reschedule
@@ -343,7 +419,7 @@ const Telehealth = () => {
           {/* Doctors Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: '24px',
             marginBottom: '40px',
             justifyContent: 'center'
@@ -570,6 +646,171 @@ const Telehealth = () => {
 
         </div>
       </div>
+
+      {/* Reschedule Modal */}
+      {rescheduleSession && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '24px',
+            maxWidth: '520px',
+            width: '100%',
+            padding: '32px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>
+                Reschedule Consultation
+              </h3>
+              <button
+                onClick={() => setRescheduleSession(null)}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Doctor Summary */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              background: '#f8fafc',
+              borderRadius: '16px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              border: '1px solid #e2e8f0'
+            }}>
+              <img
+                src={rescheduleSession.image}
+                alt={rescheduleSession.doctor}
+                style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover' }}
+              />
+              <div>
+                <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#1e293b' }}>{rescheduleSession.doctor}</div>
+                <div style={{ fontSize: '0.78rem', color: emerald, fontWeight: '600' }}>{rescheduleSession.specialty}</div>
+                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Current: {rescheduleSession.date}</div>
+              </div>
+            </div>
+
+            {/* Step 1: Calendar Date Selection */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '8px' }}>
+                Select New Date
+              </label>
+              <EmeraldDatePicker value={rescheduleDate} onChange={setRescheduleDate} />
+            </div>
+
+            {/* Step 2: Time Slots Grid */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '8px' }}>
+                Select Available Time Slot
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                {[
+                  '09:00 AM', '09:30 AM', '10:00 AM',
+                  '10:30 AM', '11:00 AM', '11:30 AM',
+                  '02:00 PM', '02:30 PM', '03:00 PM',
+                  '03:30 PM', '04:00 PM', '05:00 PM',
+                  '05:30 PM', '06:00 PM', '06:30 PM'
+                ].map(slot => (
+                  <button
+                    key={slot}
+                    onClick={() => setRescheduleTime(slot)}
+                    style={{
+                      padding: '10px 8px',
+                      borderRadius: '10px',
+                      border: rescheduleTime === slot ? `2px solid ${emerald}` : '1px solid #e2e8f0',
+                      background: rescheduleTime === slot ? emeraldLight : 'white',
+                      color: rescheduleTime === slot ? emeraldDark : '#475569',
+                      fontWeight: rescheduleTime === slot ? '700' : '500',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {slot}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Step 3: Optional Reason */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '8px' }}>
+                Reason for Rescheduling (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Schedule conflict, work commitment..."
+                value={rescheduleReason}
+                onChange={(e) => setRescheduleReason(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '0.85rem',
+                  fontFamily: 'inherit',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setRescheduleSession(null)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: '1px solid #cbd5e1',
+                  background: 'white',
+                  color: '#64748b',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReschedule}
+                style={{
+                  flex: 2,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: emerald,
+                  color: 'white',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Confirm New Time
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }

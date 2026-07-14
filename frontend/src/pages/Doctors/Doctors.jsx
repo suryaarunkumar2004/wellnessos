@@ -80,7 +80,7 @@ const Doctors = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
   const [specialties, setSpecialties] = useState(['All']);
   const [currentPage, setCurrentPage] = useState(1);
-  const [doctorsPerPage] = useState(8);
+  const [doctorsPerPage] = useState(12);
   
   const { toggleFavorite, isFavorite } = useFavorites();
   const { toggleBookmark, isBookmarked } = useBookmarks();
@@ -361,7 +361,7 @@ const Doctors = () => {
           {/* Doctors Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(275px, 1fr))',
             gap: '24px',
             marginBottom: '40px',
             justifyContent: 'center'

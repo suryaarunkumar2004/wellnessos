@@ -30,7 +30,11 @@ const Navbar = () => {
   const emerald = '#059669';
   const emeraldLight = '#ecfdf5';
   const emeraldDark = '#047857';
-  const itemCount = cartItems?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0;
+
+  const validFavorites = Array.isArray(favorites) ? favorites.filter(f => f && (f.id !== undefined && f.id !== null)) : [];
+  const validBookmarks = Array.isArray(bookmarks) ? bookmarks.filter(b => b && (b.id !== undefined && b.id !== null)) : [];
+  const validCartItems = Array.isArray(cartItems) ? cartItems.filter(c => c && (c.id !== undefined && c.id !== null)) : [];
+  const itemCount = validCartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -59,7 +63,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/signup');
+    navigate('/login');
     setIsProfileOpen(false);
   };
 
@@ -224,7 +228,7 @@ const Navbar = () => {
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
           >
             <FaHeart />
-            {favorites?.length > 0 && (
+            {validFavorites.length > 0 && (
               <span style={{
                 position: 'absolute',
                 top: '0',
@@ -238,7 +242,7 @@ const Navbar = () => {
                 minWidth: '14px',
                 textAlign: 'center',
               }}>
-                {favorites.length}
+                {validFavorites.length}
               </span>
             )}
           </button>
@@ -252,7 +256,7 @@ const Navbar = () => {
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
           >
             <FaBookmark />
-            {bookmarks?.length > 0 && (
+            {validBookmarks.length > 0 && (
               <span style={{
                 position: 'absolute',
                 top: '0',
@@ -266,7 +270,7 @@ const Navbar = () => {
                 minWidth: '14px',
                 textAlign: 'center',
               }}>
-                {bookmarks.length}
+                {validBookmarks.length}
               </span>
             )}
           </button>
@@ -486,9 +490,9 @@ const Navbar = () => {
           >
             <FaHeart style={{ color: emerald, fontSize: '1.2rem' }} />
             <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#475569' }}>Favorites</span>
-            {favorites?.length > 0 && (
+            {validFavorites.length > 0 && (
               <span style={{ position: 'absolute', top: '4px', right: '4px', background: emerald, color: 'white', borderRadius: '50%', padding: '1px 5px', fontSize: '0.6rem', fontWeight: 'bold' }}>
-                {favorites.length}
+                {validFavorites.length}
               </span>
             )}
           </button>
@@ -500,9 +504,9 @@ const Navbar = () => {
           >
             <FaBookmark style={{ color: emerald, fontSize: '1.2rem' }} />
             <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#475569' }}>Bookmarks</span>
-            {bookmarks?.length > 0 && (
+            {validBookmarks.length > 0 && (
               <span style={{ position: 'absolute', top: '4px', right: '4px', background: emerald, color: 'white', borderRadius: '50%', padding: '1px 5px', fontSize: '0.6rem', fontWeight: 'bold' }}>
-                {bookmarks.length}
+                {validBookmarks.length}
               </span>
             )}
           </button>

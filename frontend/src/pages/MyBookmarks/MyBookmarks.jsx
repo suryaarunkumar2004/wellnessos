@@ -1,117 +1,78 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaBookmark, FaArrowLeft, FaTrash } from 'react-icons/fa';
 import Navbar from '../../components/Navbar/Navbar';
 import Footer from '../../components/Footer/Footer';
 import { servicesData } from '../../data/servicesData';
 import { drugDatabase } from '../../services/drugDatabase';
+import { useBookmarks } from '../../contexts/BookmarksContext';
 
 const MyBookmarks = () => {
   const navigate = useNavigate();
   const emerald = '#059669';
-  const [allBookmarks, setAllBookmarks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { bookmarks, toggleBookmark, loading } = useBookmarks();
 
-  const loadBookmarks = () => {
-    setLoading(true);
-    const items = [];
+  const validBookmarks = Array.isArray(bookmarks) ? bookmarks.filter(b => b && (b.id !== undefined && b.id !== null)) : [];
 
-    // Read DIRECTLY from localStorage - NO CONTEXT
-    let stored = [];
-    try {
-      const raw = localStorage.getItem('globalBookmarks');
-      if (raw) {
-        stored = JSON.parse(raw);
-        console.log('✅ Bookmarks loaded:', stored.length, 'items');
-      } else {
-        console.log('⚠️ No bookmarks found in localStorage');
-      }
-    } catch (e) {
-      console.error('Error loading bookmarks:', e);
-    }
-
-    // Services
-    stored.filter(f => f.type === 'service').forEach(f => {
-      const s = servicesData.find(s => s.id === f.id);
-      if (s) {
-        items.push({
-          id: `service-${s.id}`,
-          originalId: s.id,
-          name: s.name,
-          category: s.category,
-          price: s.price,
-          type: 'Service',
-          icon: '🏥',
-          description: s.description || 'Premium healthcare service',
-          source: 'Services',
-          path: `/services/${s.id}`
-        });
-      }
-    });
-
-    // Drugs
-    stored.filter(f => f.type === 'drug').forEach(f => {
+  const items = validBookmarks.map(f => {
+    if (f.type === 'drug') {
       const d = drugDatabase.find(d => d.id === f.id);
-      if (d) {
-        items.push({
-          id: `drug-${d.id}`,
-          originalId: d.id,
-          name: d.name,
-          category: d.category,
-          price: d.price,
-          type: 'Drug',
-          icon: '💊',
-          description: d.description || 'Prescription medication',
-          source: 'Dosage Guide',
-          path: `/dosage-guide/${d.id}`
-        });
-      }
-    });
-
-    // Blogs
-    stored.filter(f => f.type === 'blog').forEach(f => {
-      items.push({
+      return {
+        id: `drug-${f.id}`,
+        originalId: f.id,
+        name: d?.name || f.name || `Medication #${f.id}`,
+        category: d?.category || f.category || 'Medication',
+        price: d?.price || f.price || 49,
+        type: 'Drug',
+        icon: '💊',
+        description: d?.description || f.description || 'Prescription medication',
+        source: 'Dosage Guide',
+        path: `/dosage-guide/${f.id}`
+      };
+    } else if (f.type === 'blog') {
+      return {
         id: `blog-${f.id}`,
         originalId: f.id,
-        name: f.title || `Blog Post ${f.id}`,
-        category: f.category || 'Blog',
+        name: f.name || f.title || `Blog Post #${f.id}`,
+        category: f.category || 'Health Article',
         type: 'Blog',
         icon: '📝',
-        description: 'Health article',
+        description: f.description || 'Health article & insights',
         source: 'Blog',
         path: `/blog/${f.id}`
-      });
-    });
-
-    setAllBookmarks(items);
-    setLoading(false);
-  };
-
-  // Remove from localStorage directly
-  const removeBookmark = (id) => {
-    try {
-      const raw = localStorage.getItem('globalBookmarks');
-      if (raw) {
-        let stored = JSON.parse(raw);
-        stored = stored.filter(f => f.id !== id);
-        localStorage.setItem('globalBookmarks', JSON.stringify(stored));
-        loadBookmarks(); // Reload the list
-      }
-    } catch (e) {
-      console.error('Error removing bookmark:', e);
+      };
+    } else if (f.type === 'doctor') {
+      return {
+        id: `doctor-${f.id}`,
+        originalId: f.id,
+        name: f.name || f.doctor || `Dr. Consultant #${f.id}`,
+        category: f.specialty || f.category || 'Medical Specialist',
+        type: 'Doctor',
+        icon: '👨‍⚕️',
+        description: f.bio || 'Board-certified medical specialist',
+        source: 'Telehealth',
+        path: `/doctors`
+      };
+    } else {
+      const s = servicesData.find(s => s.id === f.id);
+      return {
+        id: `service-${f.id}`,
+        originalId: f.id,
+        name: s?.name || f.name || f.title || `Service #${f.id}`,
+        category: s?.category || f.category || 'General Service',
+        price: s?.price || f.price || 199,
+        type: 'Service',
+        icon: '🏥',
+        description: s?.description || f.description || 'Premium healthcare service',
+        source: 'Services',
+        path: `/services/${f.id}`
+      };
     }
-  };
+  });
 
-  useEffect(() => {
-    loadBookmarks();
-    const handleStorage = (e) => {
-      if (e.key === 'globalBookmarks') {
-        loadBookmarks();
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
+  const handleRemove = (originalId) => {
+    toggleBookmark(originalId);
+  };
 
   if (loading) {
     return (
@@ -143,11 +104,11 @@ const MyBookmarks = () => {
             </div>
             <div>
               <h1 style={{ fontSize: '2rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>Your Bookmarks</h1>
-              <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>{allBookmarks.length} items saved</p>
+              <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>{items.length} items saved</p>
             </div>
           </div>
 
-          {allBookmarks.length === 0 ? (
+          {items.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', background: 'white', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
               <FaBookmark style={{ fontSize: '4rem', color: '#e2e8f0', marginBottom: '16px' }} />
               <h3 style={{ fontSize: '1.3rem', color: '#1e293b', marginBottom: '8px' }}>No Bookmarks Yet</h3>
@@ -160,7 +121,7 @@ const MyBookmarks = () => {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-              {allBookmarks.map(item => (
+              {items.map(item => (
                 <div key={item.id} onClick={() => navigate(item.path)} style={{ background: 'white', borderRadius: '16px', padding: '16px 18px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.3s ease' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.08)'; e.currentTarget.style.borderColor = emerald; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = '#e2e8f0'; }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -168,7 +129,7 @@ const MyBookmarks = () => {
                       <span style={{ background: '#ecfdf5', color: emerald, padding: '2px 10px', borderRadius: '12px', fontSize: '0.6rem', fontWeight: '600' }}>{item.type}</span>
                       <span style={{ background: '#f1f5f9', color: '#64748b', padding: '2px 8px', borderRadius: '12px', fontSize: '0.55rem', fontWeight: '500' }}>{item.source}</span>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); removeBookmark(item.originalId); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '4px' }}><FaTrash /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleRemove(item.originalId); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '4px' }}><FaTrash /></button>
                   </div>
                   <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: '#1e293b', margin: '6px 0 2px 0' }}>{item.name}</h3>
                   <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '0 0 6px 0' }}>{item.category}</p>

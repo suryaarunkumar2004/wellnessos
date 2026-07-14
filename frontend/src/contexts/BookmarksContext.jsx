@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const BookmarksContext = createContext();
 
@@ -13,37 +14,59 @@ export const useBookmarks = () => {
 export const BookmarksProvider = ({ children }) => {
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('globalBookmarks');
-      if (stored) {
-        setBookmarks(JSON.parse(stored));
+    const fetchBookmarks = async () => {
+      try {
+        const key = `bookmarks_user_${user?.id || 'guest'}`;
+        const stored = localStorage.getItem(key) || localStorage.getItem('globalBookmarks');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            const valid = parsed.filter(item => item && (item.id !== undefined && item.id !== null));
+            setBookmarks(valid);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading bookmarks:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading bookmarks:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    };
+
+    fetchBookmarks();
+  }, [user]);
 
   useEffect(() => {
     try {
+      const key = `bookmarks_user_${user?.id || 'guest'}`;
+      localStorage.setItem(key, JSON.stringify(bookmarks));
       localStorage.setItem('globalBookmarks', JSON.stringify(bookmarks));
     } catch (error) {
       console.error('Error saving bookmarks:', error);
     }
-  }, [bookmarks]);
+  }, [bookmarks, user]);
 
-  const toggleBookmark = (itemId, itemData = {}) => {
-    setBookmarks(prev => {
-      const exists = prev.some(item => item.id === itemId);
-      if (exists) {
-        return prev.filter(item => item.id !== itemId);
-      } else {
-        return [...prev, { id: itemId, ...itemData, addedAt: new Date().toISOString() }];
+  const toggleBookmark = async (itemId, itemData = {}) => {
+    const exists = bookmarks.some(item => item.id === itemId);
+    const updatedBookmarks = exists
+      ? bookmarks.filter(item => item.id !== itemId)
+      : [...bookmarks, { id: itemId, ...itemData, addedAt: new Date().toISOString() }];
+
+    setBookmarks(updatedBookmarks);
+
+    if (user && user.id) {
+      try {
+        await fetch('/api/interactions/bookmark', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, postId: itemId })
+        });
+      } catch (err) {
+        console.warn('MySQL bookmark sync warning:', err);
       }
-    });
+    }
   };
 
   const isBookmarked = (itemId) => {

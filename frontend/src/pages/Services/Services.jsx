@@ -330,7 +330,7 @@ const Services = () => {
           {/* Services Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(275px, 1fr))',
             gap: '20px',
             marginBottom: '40px'
           }}>

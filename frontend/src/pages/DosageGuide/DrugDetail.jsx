@@ -30,6 +30,100 @@ const DrugDetail = () => {
     setLoading(false);
   }, [id]);
 
+  const getDetailedPrescriptionInfo = (drug) => {
+    if (!drug) return '';
+    if (drug.prescriptionDetail) return drug.prescriptionDetail;
+
+    const name = (drug.name || '').toLowerCase();
+    const cat = (drug.category || '').toLowerCase();
+
+    // Controlled Opioids & Central Analgesics
+    if (name.includes('morphine') || name.includes('fentanyl') || name.includes('oxycodone') || name.includes('hydromorphone') || name.includes('tapentadol')) {
+      return 'Rx Required • Schedule II Controlled Opioid (Strict Oversight)';
+    }
+    if (name.includes('tramadol') || name.includes('codeine') || name.includes('alprazolam') || name.includes('clonazepam') || name.includes('lorazepam')) {
+      return 'Rx Required • Schedule IV/V Controlled Neuropathic & Sedative Agent';
+    }
+    if (name.includes('gabapentin') || name.includes('pregabalin')) {
+      return 'Rx Required • Schedule V Anticonvulsant & GABAergic Modulator';
+    }
+
+    // Antibiotics & Anti-Infectives
+    if (cat.includes('antibiotic')) {
+      if (name.includes('amoxicillin') || name.includes('penicillin') || name.includes('ampicillin')) {
+        return 'Rx Required • Aminopenicillin Antimicrobial Therapy';
+      }
+      if (name.includes('azithromycin') || name.includes('clarithromycin') || name.includes('erythromycin')) {
+        return 'Rx Required • Targeted Macrolide Antibacterial Course';
+      }
+      if (name.includes('ciprofloxacin') || name.includes('levofloxacin') || name.includes('moxifloxacin')) {
+        return 'Rx Required • Second/Third Gen Fluoroquinolone Anti-Infective';
+      }
+      if (name.includes('vancomycin') || name.includes('meropenem') || name.includes('linezolid') || name.includes('daptomycin')) {
+        return 'Rx Required • High-Potency Reserve Hospital Infusion Antibiotic';
+      }
+      return 'Rx Required • Systemic Broad-Spectrum Antibacterial Agent';
+    }
+
+    // Cardiovascular & Anticoagulants
+    if (cat.includes('cardio')) {
+      if (name.includes('apixaban') || name.includes('rivaroxaban') || name.includes('dabigatran') || name.includes('warfarin')) {
+        return 'Rx Required • Anticoagulant Blood Thinner (INR Tracked)';
+      }
+      if (name.includes('atorvastatin') || name.includes('ezetimibe') || name.includes('simvastatin') || name.includes('rosuvastatin')) {
+        return 'Rx Required • Lipid-Lowering Statin & HMG-CoA Reductase Inhibitor';
+      }
+      if (name.includes('amlodipine') || name.includes('losartan') || name.includes('propranolol') || name.includes('lisinopril')) {
+        return 'Rx Required • Cardiovascular Vasodilator & BP Modulator';
+      }
+      return 'Rx Required • Cardiac Hemodynamic & Hypertensive Control';
+    }
+
+    // Diabetes & Hormones
+    if (cat.includes('diabet') || cat.includes('hormone')) {
+      if (name.includes('insulin') || name.includes('glargine') || name.includes('lispro')) {
+        return 'Rx Required • Recombinant Subcutaneous Human Insulin Therapy';
+      }
+      if (name.includes('metformin')) {
+        return 'Rx Required • Biguanide Insulin Sensitizer & Antidiabetic';
+      }
+      return 'Rx Required • Endocrine Glucose & Metabolic Regulator';
+    }
+
+    // Respiratory & Allergy
+    if (cat.includes('resp') || cat.includes('asthma')) {
+      if (name.includes('salbutamol') || name.includes('budesonide') || name.includes('tiotropium')) {
+        return 'Rx Required • Inhaled Bronchodilator & Airway Anti-Inflammatory';
+      }
+      return 'Rx Required • Pulmonary Airway Resistance Modulator';
+    }
+
+    // Pain Relief & NSAIDs
+    if (cat.includes('pain')) {
+      if (name.includes('paracetamol') || name.includes('aspirin')) {
+        return 'OTC Approved • Non-Narcotic Antipyretic & Pain Relief';
+      }
+      if (name.includes('ibuprofen') || name.includes('naproxen')) {
+        return 'OTC / Rx • Propionic Anti-Inflammatory & Analgesic Compound';
+      }
+      if (name.includes('celecoxib') || name.includes('ketorolac') || name.includes('diclofenac')) {
+        return 'Rx Required • Targeted Selective Systemic NSAID';
+      }
+    }
+
+    // Psychiatric & CNS
+    if (cat.includes('psych') || cat.includes('nervous')) {
+      return 'Rx Required • Central Nervous System Neuromodulator Agent';
+    }
+
+    // Gastrointestinal
+    if (cat.includes('gastro') || cat.includes('ulcer')) {
+      return 'Rx / OTC • Gastric Acid Proton Pump Shield & Suppressor';
+    }
+
+    return `Rx Required • ${drug.category || 'Clinical'} Certified Prescription Medication`;
+  };
+
   const renderStars = (rating) => {
     const fullStars = Math.floor(rating || 4.5);
     const emptyStars = 5 - fullStars;
@@ -154,6 +248,22 @@ const DrugDetail = () => {
                     {renderStars(drug.rating || 4.5)}
                     <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>({drug.rating || 4.5})</span>
                   </span>
+                </div>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: '#ecfdf5',
+                  border: '1px solid #a7f3d0',
+                  borderRadius: '10px',
+                  padding: '6px 14px',
+                  marginTop: '10px',
+                  color: '#047857',
+                  fontWeight: '600',
+                  fontSize: '0.82rem'
+                }}>
+                  <FaPrescription style={{ color: '#059669', fontSize: '0.95rem' }} />
+                  <span>{getDetailedPrescriptionInfo(drug)}</span>
                 </div>
               </div>
             </div>

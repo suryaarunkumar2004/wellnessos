@@ -24,6 +24,8 @@ import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import Navbar from '../../components/Navbar/Navbar';
 import Footer from '../../components/Footer/Footer';
 import CustomDropdown from '../../components/CustomDropdown';
+import EmeraldDatePicker from '../../components/EmeraldDatePicker';
+import { useAuth } from '../../contexts/AuthContext';
 
 ChartJS.register(
   CategoryScale,
@@ -1132,7 +1134,7 @@ const HealthTracker = () => {
             maxWidth: '500px',
             width: '100%',
             maxHeight: '90vh',
-            overflowY: 'auto',
+            overflow: 'visible',
             animation: 'modalSlideIn 0.3s ease'
           }}>
             <h2 style={{ fontSize: '1.3rem', fontWeight: '700', color: '#1e293b', marginBottom: '20px' }}>
@@ -1169,6 +1171,7 @@ const HealthTracker = () => {
                   borderRadius: '10px',
                   fontSize: '0.9rem',
                   outline: 'none',
+                  boxSizing: 'border-box',
                   transition: 'border-color 0.2s ease'
                 }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = emerald; }}
@@ -1180,22 +1183,7 @@ const HealthTracker = () => {
               <label style={{ fontSize: '0.8rem', fontWeight: '600', color: '#1e293b', display: 'block', marginBottom: '4px' }}>
                 Date
               </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                  transition: 'border-color 0.2s ease'
-                }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = emerald; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; }}
-              />
+              <EmeraldDatePicker value={date} onChange={setDate} />
             </div>
 
             <div style={{ marginBottom: '24px' }}>
@@ -1214,7 +1202,8 @@ const HealthTracker = () => {
                   borderRadius: '10px',
                   fontSize: '0.9rem',
                   outline: 'none',
-                  resize: 'vertical',
+                  resize: 'none',
+                  boxSizing: 'border-box',
                   transition: 'border-color 0.2s ease'
                 }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = emerald; }}

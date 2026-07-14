@@ -31,7 +31,7 @@ const Blog = () => {
   const [categories, setCategories] = useState(['All']);
   const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
-  const [postsPerPage] = useState(9);
+  const [postsPerPage] = useState(12);
   const [isInitialized, setIsInitialized] = useState(false);
 
   const { toggleFavorite, isFavorite } = useFavorites();
@@ -252,7 +252,9 @@ const Blog = () => {
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
-          minHeight: '380px'
+          minHeight: '380px',
+          width: '100%',
+          boxSizing: 'border-box'
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-4px)';
@@ -504,12 +506,12 @@ const Blog = () => {
           </div>
 
           <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fit, minmax(280px, 1fr))' : '1fr', 
+            display: viewMode === 'grid' ? 'grid' : 'flex', 
+            gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(270px, 1fr))' : 'none',
+            flexDirection: viewMode === 'grid' ? 'row' : 'column',
             gap: viewMode === 'grid' ? '24px' : '12px', 
             marginBottom: '32px', 
-            alignItems: 'stretch',
-            justifyContent: 'center'
+            width: '100%'
           }}>
             {currentPosts.map(viewMode === 'grid' ? renderGridCard : renderListCard)}
           </div>

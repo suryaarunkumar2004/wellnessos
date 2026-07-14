@@ -50,7 +50,10 @@ const Signup = () => {
 
       if (data.success) {
         setSuccess('Account created successfully!');
-        setTimeout(() => navigate('/login'), 1500);
+        if (data.user && data.token) {
+          login(data.user, data.token);
+        }
+        setTimeout(() => navigate('/profile'), 1200);
       } else {
         setError(data.error || 'Registration failed. Please try again.');
       }
@@ -188,6 +191,7 @@ const Signup = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                className="border-none-focus"
                 style={{
                   border: 'none',
                   padding: '14px 12px',
@@ -232,6 +236,7 @@ const Signup = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="border-none-focus"
                 style={{
                   border: 'none',
                   padding: '14px 12px',
@@ -277,6 +282,7 @@ const Signup = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength="6"
+                className="border-none-focus"
                 style={{
                   border: 'none',
                   padding: '14px 12px',
@@ -335,6 +341,8 @@ const Signup = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                minLength="6"
+                className="border-none-focus"
                 style={{
                   border: 'none',
                   padding: '14px 12px',

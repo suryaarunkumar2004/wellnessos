@@ -48,7 +48,7 @@ const MedicalHistory = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [recordsPerPage] = useState(8);
+  const [recordsPerPage] = useState(9);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMetric, setSelectedMetric] = useState('steps');
   const [expandedRecord, setExpandedRecord] = useState(null);

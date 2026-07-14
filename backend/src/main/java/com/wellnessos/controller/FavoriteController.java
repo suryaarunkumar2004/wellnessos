@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -45,16 +46,22 @@ public class FavoriteController {
         return ResponseEntity.ok(favoriteRepository.save(favorite));
     }
 
-    @Operation(summary = "Remove a favorite", description = "Removes a service from user's favorites")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Favorite removed successfully"),
-        @ApiResponse(responseCode = "404", description = "Favorite not found")
-    })
     @DeleteMapping("/{userId}/{serviceId}")
     public ResponseEntity<?> removeFavorite(@PathVariable Long userId, @PathVariable Long serviceId) {
-        favoriteRepository.deleteByUserIdAndServiceId(userId, serviceId);
+        favoriteRepository.findByUserIdAndServiceId(userId, serviceId).ifPresent(favorite -> {
+            favoriteRepository.delete(favorite);
+        });
         Map<String, String> response = new HashMap<>();
         response.put("message", "Favorite removed successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/user/{userId}/clear")
+    public ResponseEntity<?> clearFavorites(@PathVariable Long userId) {
+        List<Favorite> favorites = favoriteRepository.findByUserId(userId);
+        favoriteRepository.deleteAll(favorites);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "All favorites cleared successfully");
         return ResponseEntity.ok(response);
     }
 
