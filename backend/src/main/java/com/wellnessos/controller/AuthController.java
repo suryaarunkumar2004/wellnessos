@@ -1,13 +1,16 @@
 package com.wellnessos.controller;
 
 import com.wellnessos.dto.LoginRequest;
-import com.wellnessos.dto.OtpRequest;
-import com.wellnessos.dto.OtpVerifyRequest;
 import com.wellnessos.dto.RegisterRequest;
 import com.wellnessos.entity.User;
 import com.wellnessos.repository.UserRepository;
+import com.wellnessos.service.EmailService;
 import com.wellnessos.service.JwtService;
 import com.wellnessos.service.OtpService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,240 +19,275 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "*")
+@Tag(name = "Authentication", description = "Authentication and user management APIs")
 public class AuthController {
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private OtpService otpService;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private JwtService jwtService;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private EmailService emailService;
 
-    // ===== EXISTING ENDPOINTS =====
+    @Autowired
+    private OtpService otpService;
 
-    @PostMapping("/send-otp")
-    public ResponseEntity<?> sendOtp(@RequestBody OtpRequest request) {
+    @Operation(summary = "Login user", description = "Authenticates a user and returns a JWT token")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Login successful"),
+        @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    })
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
-            String otp = otpService.generateOtpAndSendEmail(request.getEmail(), request.getName());
-            
+            Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(401).body(Map.of("success", false, "error", "Invalid email or password"));
+            }
+            User user = userOpt.get();
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                return ResponseEntity.status(401).body(Map.of("success", false, "error", "Invalid email or password"));
+            }
+            if (!user.getIsActive()) {
+                return ResponseEntity.status(403).body(Map.of("success", false, "error", "Account is deactivated"));
+            }
+            String token = jwtService.generateToken(user.getEmail());
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "OTP sent to your email. Please check your inbox.");
+            response.put("token", token);
+
+            Map<String, Object> userData = new HashMap<>();
+            userData.put("id", user.getId());
+            userData.put("name", user.getName());
+            userData.put("email", user.getEmail());
+            userData.put("phone", user.getPhone());
+            userData.put("dob", user.getDob());
+            userData.put("gender", user.getGender());
+            userData.put("address", user.getAddress());
+            userData.put("city", user.getCity());
+            userData.put("country", user.getCountry());
+            userData.put("role", user.getRole());
+
+            response.put("user", userData);
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("error", "Failed to send OTP. Please try again.");
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
         }
     }
 
-    @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody OtpVerifyRequest request) {
-        boolean isValid = otpService.verifyOtp(request.getEmail(), request.getOtp());
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", isValid);
-        response.put("message", isValid ? "OTP verified successfully" : "Invalid or expired OTP");
-        return ResponseEntity.ok(response);
-    }
-
+    @Operation(summary = "Register new user", description = "Creates a new user account")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Registration successful"),
+        @ApiResponse(responseCode = "400", description = "Validation error or email already exists")
+    })
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         try {
             if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Email already exists"));
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Email already exists"));
             }
-            
+
             User user = new User();
             user.setName(request.getName());
             user.setEmail(request.getEmail());
             user.setPassword(passwordEncoder.encode(request.getPassword()));
-            user.setPhone(request.getPhone());
-            user.setDob(request.getDob());
-            user.setCountry(request.getCountry());
-            user.setCity(request.getCity());
-            user.setAddress(request.getAddress());
-            user.setGender(request.getGender());
+            user.setPhone(request.getPhone() != null ? request.getPhone() : "");
+            user.setDob(request.getDob() != null ? request.getDob() : "");
+            user.setGender(request.getGender() != null ? request.getGender() : "");
+            user.setAddress(request.getAddress() != null ? request.getAddress() : "");
+            user.setCity(request.getCity() != null ? request.getCity() : "");
+            user.setCountry(request.getCountry() != null ? request.getCountry() : "");
+            user.setRole("PATIENT");
+            user.setIsActive(true);
             user.setCreatedAt(LocalDateTime.now());
             user.setUpdatedAt(LocalDateTime.now());
-            
-            User savedUser = userRepository.save(user);
-            
-            String token = jwtService.generateToken(savedUser.getEmail());
-            
+
+            User saved = userRepository.save(user);
+
+            try {
+                emailService.sendWelcomeEmail(saved.getEmail(), saved.getName());
+            } catch (Exception e) {
+                System.err.println("Welcome email failed: " + e.getMessage());
+            }
+
+            String token = jwtService.generateToken(saved.getEmail());
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "User registered successfully");
             response.put("token", token);
-            
-            Map<String, Object> userMap = new HashMap<>();
-            userMap.put("id", savedUser.getId());
-            userMap.put("name", savedUser.getName());
-            userMap.put("email", savedUser.getEmail());
-            userMap.put("phone", savedUser.getPhone());
-            userMap.put("dob", savedUser.getDob() != null ? savedUser.getDob().toString() : null);
-            userMap.put("country", savedUser.getCountry());
-            userMap.put("city", savedUser.getCity());
-            userMap.put("address", savedUser.getAddress());
-            userMap.put("gender", savedUser.getGender());
-            userMap.put("role", savedUser.getRole());
-            response.put("user", userMap);
-            
+
+            Map<String, Object> userData = new HashMap<>();
+            userData.put("id", saved.getId());
+            userData.put("name", saved.getName());
+            userData.put("email", saved.getEmail());
+            userData.put("phone", saved.getPhone());
+            userData.put("dob", saved.getDob());
+            userData.put("gender", saved.getGender());
+            userData.put("address", saved.getAddress());
+            userData.put("city", saved.getCity());
+            userData.put("country", saved.getCountry());
+            userData.put("role", saved.getRole());
+
+            response.put("user", userData);
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
         }
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    @Operation(summary = "Send OTP", description = "Sends an OTP to the user's email for verification")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OTP sent successfully"),
+        @ApiResponse(responseCode = "400", description = "Email not found")
+    })
+    @PostMapping("/send-otp")
+    public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request) {
         try {
-            User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-            
-            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid password"));
+            String email = request.get("email");
+            String name = request.get("name");
+
+            if (email == null || email.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Email is required"));
             }
-            
-            String token = jwtService.generateToken(user.getEmail());
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("token", token);
-            
-            Map<String, Object> userMap = new HashMap<>();
-            userMap.put("id", user.getId());
-            userMap.put("name", user.getName());
-            userMap.put("email", user.getEmail());
-            userMap.put("phone", user.getPhone());
-            userMap.put("dob", user.getDob() != null ? user.getDob().toString() : null);
-            userMap.put("country", user.getCountry());
-            userMap.put("city", user.getCity());
-            userMap.put("address", user.getAddress());
-            userMap.put("gender", user.getGender());
-            userMap.put("role", user.getRole());
-            response.put("user", userMap);
-            
-            return ResponseEntity.ok(response);
+
+            String otp = otpService.generateOtpAndSendEmail(email, name != null ? name : "User");
+            return ResponseEntity.ok(Map.of("success", true, "message", "OTP sent successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
         }
     }
 
-    @PutMapping("/profile/{id}")
-    public ResponseEntity<?> updateProfile(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+    @Operation(summary = "Verify OTP", description = "Verifies the OTP sent to the user's email")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OTP verified successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid OTP")
+    })
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
         try {
-            User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-            
-            if (request.containsKey("name")) user.setName((String) request.get("name"));
-            if (request.containsKey("email")) user.setEmail((String) request.get("email"));
-            if (request.containsKey("phone")) user.setPhone((String) request.get("phone"));
-            if (request.containsKey("dob")) {
-                Object dobVal = request.get("dob");
-                if (dobVal == null || dobVal.toString().trim().isEmpty()) {
-                    user.setDob(null);
-                } else {
-                    user.setDob(java.time.LocalDate.parse(dobVal.toString()));
-                }
+            String email = request.get("email");
+            String otp = request.get("otp");
+
+            if (email == null || otp == null) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Email and OTP are required"));
             }
-            if (request.containsKey("country")) user.setCountry((String) request.get("country"));
-            if (request.containsKey("city")) user.setCity((String) request.get("city"));
-            if (request.containsKey("address")) user.setAddress((String) request.get("address"));
-            if (request.containsKey("gender")) user.setGender((String) request.get("gender"));
-            
-            user.setUpdatedAt(LocalDateTime.now());
-            User savedUser = userRepository.save(user);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Profile updated successfully");
-            
-            Map<String, Object> userMap = new HashMap<>();
-            userMap.put("id", savedUser.getId());
-            userMap.put("name", savedUser.getName());
-            userMap.put("email", savedUser.getEmail());
-            userMap.put("phone", savedUser.getPhone());
-            userMap.put("dob", savedUser.getDob() != null ? savedUser.getDob().toString() : null);
-            userMap.put("country", savedUser.getCountry());
-            userMap.put("city", savedUser.getCity());
-            userMap.put("address", savedUser.getAddress());
-            userMap.put("gender", savedUser.getGender());
-            userMap.put("role", savedUser.getRole());
-            response.put("user", userMap);
-            
-            return ResponseEntity.ok(response);
+
+            boolean isValid = otpService.verifyOTP(email, otp);
+            if (isValid) {
+                return ResponseEntity.ok(Map.of("success", true, "message", "OTP verified successfully"));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Invalid OTP"));
+            }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
         }
     }
 
-    // ===== NEW: Forgot Password Endpoints =====
-
+    @Operation(summary = "Check if email exists", description = "Checks if an email is already registered")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Email check completed")
+    })
     @PostMapping("/check-email")
     public ResponseEntity<?> checkEmail(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        boolean exists = userRepository.findByEmail(email).isPresent();
-        return ResponseEntity.ok(Map.of("exists", exists));
-    }
-
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        
         try {
-            User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-            
-            // Generate OTP or reset token
-            String otp = otpService.generateOtpAndSendEmail(email, user.getName());
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Password reset link sent to your email.");
-            return ResponseEntity.ok(response);
+            String email = request.get("email");
+            if (email == null || email.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Email is required"));
+            }
+
+            boolean exists = userRepository.findByEmail(email).isPresent();
+            return ResponseEntity.ok(Map.of("success", true, "exists", exists));
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
         }
     }
 
+    @Operation(summary = "Forgot password", description = "Sends a password reset link to the user's email")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Reset link sent successfully"),
+        @ApiResponse(responseCode = "400", description = "Email not found")
+    })
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            if (email == null || email.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Email is required"));
+            }
+
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Email not found"));
+            }
+
+            // Generate password reset token using JWT
+            String resetToken = jwtService.generateToken(email);
+
+            String resetLink = "http://localhost:5173/reset-password?token=" + resetToken;
+            emailService.sendNotificationEmail(email, "Password Reset Request",
+                "Click the link below to reset your password:\n\n" + resetLink + "\n\nThis link will expire in 15 minutes.");
+
+            return ResponseEntity.ok(Map.of("success", true, "message", "Password reset link sent successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Reset password", description = "Resets the user's password using a valid token")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Password reset successful"),
+        @ApiResponse(responseCode = "400", description = "Invalid token or password")
+    })
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        String otp = request.get("otp");
-        String newPassword = request.get("newPassword");
-        
         try {
-            // Verify OTP
-            if (!otpService.verifyOtp(email, otp)) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid or expired OTP"));
+            String token = request.get("token");
+            String newPassword = request.get("newPassword");
+
+            if (token == null || newPassword == null) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Token and new password are required"));
             }
-            
-            // Update password
-            User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-            
+
+            if (newPassword.length() < 6) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Password must be at least 6 characters"));
+            }
+
+            if (!jwtService.isTokenValid(token)) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Invalid or expired token"));
+            }
+
+            String email = jwtService.extractEmail(token);
+            if (email == null) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Invalid token"));
+            }
+
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", "User not found"));
+            }
+
+            User user = userOpt.get();
             user.setPassword(passwordEncoder.encode(newPassword));
             user.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user);
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Password reset successfully"
-            ));
+
+            return ResponseEntity.ok(Map.of("success", true, "message", "Password reset successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
         }
     }
 }

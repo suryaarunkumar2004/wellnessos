@@ -61,8 +61,6 @@ const HealthTracker = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage] = useState(10);
   const [stats, setStats] = useState(null);
-  
-  // ⭐ Separate state for Doughnut chart data
   const [doughnutData, setDoughnutData] = useState(null);
 
   useEffect(() => {
@@ -84,7 +82,6 @@ const HealthTracker = () => {
     }
   }, [userId]);
 
-  // ⭐ Update Doughnut chart whenever healthData or stats changes
   useEffect(() => {
     if (healthData.length > 0 && stats) {
       updateDoughnutData();
@@ -113,6 +110,8 @@ const HealthTracker = () => {
 
       if (response.ok) {
         const result = await response.json();
+        console.log('📊 Health data response:', result);
+        
         if (result.success && result.data) {
           const formattedData = result.data.map(record => ({
             id: record.id,
@@ -139,11 +138,14 @@ const HealthTracker = () => {
             temperatureC: record.temperatureC || 0,
             sleepQuality: record.sleepQuality || 0
           }));
+          console.log('📊 Formatted data:', formattedData.length, 'records');
           setHealthData(formattedData);
         } else {
+          console.log('📊 No data returned from API');
           setHealthData([]);
         }
       } else {
+        console.log('📊 API response not OK:', response.status);
         setHealthData([]);
       }
     } catch (error) {
@@ -167,6 +169,7 @@ const HealthTracker = () => {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
+          console.log('📊 Stats:', result.stats);
           setStats(result.stats);
         }
       }
@@ -175,7 +178,6 @@ const HealthTracker = () => {
     }
   };
 
-  // ⭐ DYNAMIC DOUGHNUT DATA - Uses averages from stats
   const updateDoughnutData = () => {
     if (!stats || healthData.length === 0) {
       setDoughnutData({
@@ -190,7 +192,6 @@ const HealthTracker = () => {
       return;
     }
 
-    // Use average values from stats
     const metrics = [
       { key: 'steps', label: 'Steps', value: stats.avgSteps || 0, color: '#3b82f6', max: 10000 },
       { key: 'heartRate', label: 'Heart Rate', value: stats.avgHeartRate || 0, color: '#ef4444', max: 100 },
@@ -199,7 +200,6 @@ const HealthTracker = () => {
       { key: 'healthScore', label: 'Health Score', value: stats.avgHealthScore || 0, color: '#059669', max: 100 },
     ];
 
-    // Filter out zero values
     const filtered = metrics.filter(m => m.value > 0);
     
     if (filtered.length === 0) {
@@ -331,7 +331,6 @@ const HealthTracker = () => {
     { key: 'healthScore', label: 'Health Score', color: '#059669' },
   ];
 
-  // Main Chart Data
   const getChartData = () => {
     const sortedData = [...healthData].sort((a, b) => new Date(a.date) - new Date(b.date));
     const recentData = sortedData.slice(-chartDays);
@@ -410,7 +409,6 @@ const HealthTracker = () => {
     cutout: '65%',
   };
 
-  // Filter and paginate records
   const filteredRecords = healthData.filter(record => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
@@ -454,6 +452,16 @@ const HealthTracker = () => {
   };
 
   const getChartComponent = () => {
+    if (healthData.length === 0) {
+      return (
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+          <FaChartLine style={{ fontSize: '3rem', color: '#e2e8f0', marginBottom: '12px' }} />
+          <p style={{ fontSize: '0.95rem' }}>No data available for chart</p>
+          <p style={{ fontSize: '0.75rem', marginTop: '4px' }}>Add your first health record to start tracking</p>
+        </div>
+      );
+    }
+
     if (chartType === 'doughnut') {
       if (!doughnutData) {
         return <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>Loading chart...</div>;
@@ -494,6 +502,13 @@ const HealthTracker = () => {
           .chart-btn-container {
             padding: 8px 12px !important;
           }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes modalSlideIn {
+          from { opacity: 0; transform: scale(0.95) translateY(20px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}</style>
       <div style={{ paddingTop: '80px', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -645,7 +660,6 @@ const HealthTracker = () => {
                 </p>
               </div>
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-                {/* Chart Type Selector */}
                 <div style={{
                   display: 'flex',
                   borderRadius: '10px',
@@ -709,13 +723,7 @@ const HealthTracker = () => {
               </div>
             </div>
             <div style={{ height: chartType === 'doughnut' ? '250px' : '280px' }}>
-              {healthData.length > 0 ? (
-                getChartComponent()
-              ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-                  No data available for chart
-                </div>
-              )}
+              {getChartComponent()}
             </div>
           </div>
 
@@ -780,7 +788,7 @@ const HealthTracker = () => {
             </button>
           </div>
 
-          {/* Premium Health Records Table */}
+          {/* Health Records Table */}
           <div style={{
             background: 'white',
             borderRadius: '20px',
@@ -1134,8 +1142,7 @@ const HealthTracker = () => {
             maxWidth: '500px',
             width: '100%',
             maxHeight: '90vh',
-            overflow: 'visible',
-            animation: 'modalSlideIn 0.3s ease'
+            overflow: 'visible'
           }}>
             <h2 style={{ fontSize: '1.3rem', fontWeight: '700', color: '#1e293b', marginBottom: '20px' }}>
               Add Health Record
@@ -1253,15 +1260,6 @@ const HealthTracker = () => {
         </div>
       )}
 
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes modalSlideIn {
-          from { opacity: 0; transform: scale(0.95) translateY(20px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-      `}</style>
       <Footer />
     </>
   );
