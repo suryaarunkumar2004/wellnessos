@@ -58,9 +58,13 @@ public class AuthController {
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                 return ResponseEntity.status(401).body(Map.of("success", false, "error", "Invalid email or password"));
             }
-            if (!user.getIsActive()) {
+            
+            // 🔥 FIX: Handle null isActive safely
+            Boolean isActive = user.getIsActive();
+            if (isActive == null || !isActive) {
                 return ResponseEntity.status(403).body(Map.of("success", false, "error", "Account is deactivated"));
             }
+            
             String token = jwtService.generateToken(user.getEmail());
 
             Map<String, Object> response = new HashMap<>();
@@ -234,11 +238,9 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Email not found"));
             }
 
-            // Generate password reset token using JWT
             String resetToken = jwtService.generateToken(email);
-
             String resetLink = "http://localhost:5173/reset-password?token=" + resetToken;
-            emailService.sendNotificationEmail(email, "Password Reset Request",
+            emailService.sendNotificationEmail(email, "Password Reset Request", 
                 "Click the link below to reset your password:\n\n" + resetLink + "\n\nThis link will expire in 15 minutes.");
 
             return ResponseEntity.ok(Map.of("success", true, "message", "Password reset link sent successfully"));
